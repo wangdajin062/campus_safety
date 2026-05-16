@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">校园安全</string>
+    <string name="app_tagline">软硬协同 · 毫秒预警 · 隐私守护</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">首页</string>
+    <string name="nav_call">来电</string>
+    <string name="nav_cases">案例</string>
+    <string name="nav_alerts">预警</string>
+    <string name="nav_profile">我的</string>
+
+    <!-- Home -->
+    <string name="home_protection_score">防护分数</string>
+    <string name="home_latest_alerts">🔔 最新预警</string>
+    <string name="home_more">查看全部 ›</string>
+    <string name="home_today_tip">💡 今日防骗提示</string>
+    <string name="home_quick_call">查号</string>
+    <string name="home_quick_cases">案例</string>
+    <string name="home_quick_report">举报</string>
+
+    <!-- Empty states -->
+    <string name="empty_alerts">暂无预警消息</string>
+    <string name="empty_cases">暂无相关案例</string>
+    <string name="empty_call_history">暂无检测记录</string>
+
+    <!-- Actions -->
+    <string name="action_refresh">刷新</string>
+    <string name="action_report">举报</string>
+    <string name="action_favorite">收藏</string>
+    <string name="action_share">分享</string>
+    <string name="action_logout">退出登录</string>
+    <string name="action_check">查询风险</string>
+
+    <!-- Login -->
+    <string name="login_title">欢迎使用校园安全</string>
+    <string name="login_phone_hint">请输入手机号</string>
+    <string name="login_code_hint">请输入6位验证码</string>
+    <string name="login_send_code">获取验证码</string>
+    <string name="login_resend">重新发送(%ds)</string>
+    <string name="login_btn">登录 / 注册</string>
+    <string name="login_agreement">我已阅读并同意《用户协议》和《隐私政策》</string>
+
+    <!-- Risk levels -->
+    <string name="risk_high">高危</string>
+    <string name="risk_medium">中危</string>
+    <string name="risk_safe">安全</string>
+
+    <!-- Call check -->
+    <string name="call_check_hint">输入11位手机号</string>
+    <string name="call_check_btn">查询风险</string>
+    <string name="call_history_title">检测记录</string>
+
+    <!-- Case detail -->
+    <string name="case_detail_title">案例详情</string>
+    <string name="case_content_label">案情详述</string>
+
+    <!-- Settings -->
+    <string name="settings_title">设置</string>
+    <string name="settings_model_status">AI 模型状态</string>
+    <string name="settings_version">版本信息</string>
+
+    <!-- Report -->
+    <string name="report_title">举报</string>
+    <string name="report_type_phone">诈骗电话</string>
+    <string name="report_type_sms">骚扰短信</string>
+    <string name="report_type_link">钓鱼链接</string>
+    <string name="report_type_other">其他</string>
+    <string name="report_submit">提交举报</string>
+
+    <!-- CoordinatorLayout behavior -->
+    <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
+
+    <!-- ══ FCM / Firebase Cloud Messaging ═════════════════════════
+         Referenced by AndroidManifest.xml:
+           com.google.firebase.messaging.default_notification_channel_id
+         Must match the channel ID created in CampusSafetyApplication.
+    ════════════════════════════════════════════════════════════════ -->
+    <string name="fcm_channel_id" translatable="false">campus_safety_push</string>
+    <string name="fcm_channel_name">校园安全推送</string>
+    <string name="fcm_channel_desc">接收校园安全风险预警和消息推送</string>
+
+    <!-- Notification channels (local) -->
+    <string name="notif_channel_alert">风险预警</string>
+    <string name="notif_channel_alert_desc">来电/短信高危风险实时预警</string>
+    <string name="notif_channel_call">来电检测</string>
+    <string name="notif_channel_call_desc">实时来电风险检测结果通知</string>
+    <string name="notif_channel_push">消息推送</string>
+    <string name="notif_channel_push_desc">系统公告与安全提示推送</string>
+
+    <string name="user_agreement">用户协议\n\n欢迎使用校园安全APP。本协议规定了您使用本应用的条款和条件。使用本应用即表示您同意本协议的所有条款。\n\n1. 本应用收集的数据仅用于提供防诈骗服务\n2. 手机号以SHA-256哈希存储，不保留明文\n3. 短信内容在设备端提取特征，原文不上传\n4. 您可随时申请删除您的账户数据</string>
+    <string name="privacy_policy">隐私政策\n\n校园安全APP非常重视您的隐私保护。\n\n数据收集：我们仅收集提供服务所必需的最小数据。\n\n数据使用：您的数据仅用于欺诈检测和安全分析。\n\n数据保护：所有数据传输采用HTTPS加密，存储采用AES-256加密。\n\n您的权利：您有权查看、修改或删除您的个人数据。\n\n本政策符合《个人信息保护法》（PIPL 2021）的要求。</string>
+</resources>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand primary — 信任蓝 -->
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="primary_light">#BBDEFB</color>
+    <color name="primary_surface">#E3F2FD</color>
+
+    <!-- Adaptive launcher icon background (mipmap-anydpi-v26) -->
+    <color name="ic_launcher_background">#1A4E8A</color>
+
+    <!-- Accent — 活力橙（action/badge） -->
+    <color name="accent">#F57C00</color>
+    <color name="accent_light">#FFF3E0</color>
+
+    <!-- Neutrals — 温和灰阶 -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="text_primary">#1A1A2E</color>
+    <color name="text_secondary">#4A5568</color>
+    <color name="text_hint">#A0AEC0</color>
+    <color name="divider">#EDF2F7</color>
+    <color name="bg_gray">#F7FAFC</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="bg_surface">#FFFFFF</color>
+
+    <!-- Risk levels — 语义色 -->
+    <color name="risk_red">#E53E3E</color>
+    <color name="risk_red_light">#FFF5F5</color>
+    <color name="risk_red_border">#FEB2B2</color>
+    <color name="risk_orange">#DD6B20</color>
+    <color name="risk_orange_light">#FFFAF0</color>
+    <color name="risk_orange_border">#FBD38D</color>
+    <color name="risk_green">#276749</color>
+    <color name="risk_green_light">#F0FFF4</color>
+    <color name="risk_green_border">#9AE6B4</color>
+    <color name="risk_blue">#2B6CB0</color>
+    <color name="risk_blue_light">#EBF8FF</color>
+
+    <!-- Status -->
+    <color name="status_success">#38A169</color>
+    <color name="status_warning">#D69E2E</color>
+    <color name="status_error">#E53E3E</color>
+    <color name="status_info">#3182CE</color>
+
+    <!-- Score gradient stops -->
+    <color name="score_low">#E53E3E</color>
+    <color name="score_mid">#D69E2E</color>
+    <color name="score_high">#38A169</color>
+
+    <!-- Bottom nav -->
+    <color name="nav_selected">#1976D2</color>
+    <color name="nav_unselected">#718096</color>
+
+    <!-- Overlay -->
+    <color name="overlay_dark">#80000000</color>
+    <color name="overlay_light">#40FFFFFF</color>
+</resources>

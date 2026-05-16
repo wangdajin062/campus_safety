@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:layout_marginHorizontal="4dp" android:layout_marginVertical="5dp"
+    android:clickable="true" android:focusable="true"
+    app:cardCornerRadius="12dp" app:cardElevation="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:padding="14dp"
+        android:gravity="center_vertical">
+
+        <TextView android:id="@+id/tv_emoji"
+            android:layout_width="36dp" android:layout_height="36dp"
+            android:gravity="center" android:textSize="20sp" android:text="⚠️"/>
+
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView android:id="@+id/tv_title"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textSize="14sp" android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:maxLines="1" android:ellipsize="end"/>
+
+            <TextView android:id="@+id/tv_content"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:maxLines="2" android:ellipsize="end"
+                android:lineSpacingExtra="2dp"/>
+        </LinearLayout>
+
+        <TextView android:id="@+id/tv_urgent_badge"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="紧急" android:textSize="10sp" android:textColor="@color/risk_red"
+            android:background="@drawable/bg_chip_red"
+            android:paddingStart="6dp" android:paddingEnd="6dp"
+            android:paddingTop="2dp" android:paddingBottom="2dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

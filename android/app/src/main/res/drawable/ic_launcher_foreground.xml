@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ic_launcher_foreground.xml
+    Adaptive icon foreground for API 26+ (mipmap-anydpi-v26).
+    The shield + checkmark drawn in vector so it scales perfectly.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Shield body (white) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+          M54,18
+          C54,18 26,26 26,46
+          L26,62
+          C26,75 38,84 54,90
+          C70,84 82,75 82,62
+          L82,46
+          C82,26 54,18 54,18
+          Z" />
+
+    <!-- Shield inner tint (light blue) -->
+    <path
+        android:fillColor="#D2E4F8"
+        android:pathData="
+          M54,23
+          C54,23 31,30 31,48
+          L31,62
+          C31,73 41,81 54,86
+          C67,81 77,73 77,62
+          L77,48
+          C77,30 54,23 54,23
+          Z" />
+
+    <!-- Check-mark (green) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#28BE55"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M38,56 L49,67 L70,45" />
+
+</vector>

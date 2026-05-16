@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:layout_marginHorizontal="4dp" android:layout_marginVertical="5dp"
+    android:clickable="true" android:focusable="true"
+    app:cardCornerRadius="12dp" app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+
+            <TextView android:id="@+id/tv_title"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="15sp" android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:maxLines="2" android:ellipsize="end"
+                android:lineSpacingExtra="2dp"/>
+
+            <TextView android:id="@+id/tv_featured"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_chip_red"
+                android:text="🔥 热门" android:textColor="@color/risk_red"
+                android:textSize="10sp"
+                android:paddingStart="6dp" android:paddingEnd="6dp"
+                android:paddingTop="2dp" android:paddingBottom="2dp"
+                android:visibility="gone"/>
+        </LinearLayout>
+
+        <TextView android:id="@+id/tv_summary"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="13sp" android:textColor="@color/text_secondary"
+            android:maxLines="2" android:ellipsize="end"
+            android:lineSpacingExtra="3dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginTop="10dp">
+
+            <TextView android:id="@+id/tv_category"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:maxWidth="110dp" android:ellipsize="end" android:maxLines="1"
+                android:background="@drawable/bg_chip_orange"
+                android:textColor="@color/risk_orange" android:textSize="11sp"
+                android:paddingStart="8dp" android:paddingEnd="8dp"
+                android:paddingTop="3dp" android:paddingBottom="3dp"/>
+
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+
+            <TextView android:id="@+id/tv_view_count"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textSize="11sp" android:textColor="@color/text_hint"/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

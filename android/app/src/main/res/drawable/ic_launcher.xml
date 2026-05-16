@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Navy background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1A4E8A" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+
+    <!-- Shield: white fill -->
+    <item
+        android:bottom="8dp"
+        android:left="16dp"
+        android:right="16dp"
+        android:top="10dp">
+        <vector
+            android:width="60dp"
+            android:height="60dp"
+            android:viewportWidth="60"
+            android:viewportHeight="60">
+
+            <!-- Shield body -->
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="M30,4
+                    C30,4 8,12 8,26
+                    L8,38
+                    C8,48 17,54 30,58
+                    C43,54 52,48 52,38
+                    L52,26
+                    C52,12 30,4 30,4Z" />
+
+            <!-- Light blue inner -->
+            <path
+                android:fillColor="#D2E4F8"
+                android:pathData="M30,9
+                    C30,9 13,16 13,28
+                    L13,38
+                    C13,46 20,51 30,54
+                    C40,51 47,46 47,38
+                    L47,28
+                    C47,16 30,9 30,9Z" />
+
+            <!-- Green checkmark -->
+            <path
+                android:fillColor="#00000000"
+                android:strokeColor="#28BE55"
+                android:strokeWidth="4"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:pathData="M18,32 L26,40 L42,24" />
+        </vector>
+    </item>
+
+</layer-list>

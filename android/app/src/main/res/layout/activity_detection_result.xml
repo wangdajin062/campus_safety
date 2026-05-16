@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_gray">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        app:elevation="0dp">
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent" android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary"
+            app:navigationIconTint="@color/white"
+            app:title="检测结果"
+            app:titleTextColor="@color/white"
+            app:navigationIcon="?attr/homeAsUpIndicator"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:fillViewport="true">
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="16dp">
+
+            <!-- Big risk circle -->
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:gravity="center"
+                android:padding="16dp">
+
+                <FrameLayout
+                    android:id="@+id/circle_container"
+                    android:layout_width="180dp" android:layout_height="180dp"
+                    android:background="@drawable/bg_risk_orange">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tv_score"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="0" android:textSize="56sp" android:textStyle="bold"
+                            android:textColor="@color/text_primary"/>
+                        <TextView android:id="@+id/tv_risk_level"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="分析中..." android:textSize="18sp" android:textStyle="bold"
+                            android:textColor="@color/risk_orange"/>
+                    </LinearLayout>
+                    <ProgressBar android:id="@+id/progress_score"
+                        android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:max="100" android:progress="0" android:visibility="invisible"/>
+                </FrameLayout>
+
+                <TextView android:id="@+id/tv_phone"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp" android:text="********"
+                    android:textSize="18sp" android:textStyle="bold" android:textColor="@color/text_primary"/>
+
+                <TextView android:id="@+id/tv_rule_badge"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" android:visibility="gone"
+                    android:background="@drawable/bg_chip_red" android:padding="6dp"
+                    android:textColor="@color/risk_red" android:textSize="12sp"/>
+
+                <TextView android:id="@+id/tv_confidence"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp" android:text=""
+                    android:textSize="13sp" android:textColor="@color/text_secondary"/>
+            </LinearLayout>
+
+            <ProgressBar android:id="@+id/progress_stream"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="3dp"
+                android:layout_marginTop="4dp" android:indeterminate="true"
+                android:indeterminateTint="@color/primary"/>
+
+            <!-- Urgent alert card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_urgent"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:visibility="gone"
+                app:cardBackgroundColor="@color/risk_red_light"
+                app:cardCornerRadius="12dp" app:cardElevation="2dp">
+                <TextView android:id="@+id/tv_urgent_msg"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:padding="16dp" android:text=""
+                    android:textColor="@color/risk_red"
+                    android:textStyle="bold" android:textSize="14sp"/>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Fast detection card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_fast"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:visibility="gone"
+                app:cardCornerRadius="12dp" app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp">
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:text="⚡ 快速检测"
+                            android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:id="@+id/tv_fast_latency"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textColor="@color/primary" android:textSize="12sp"/>
+                    </LinearLayout>
+                    <TextView android:id="@+id/tv_modalities"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp" android:text=""
+                        android:textSize="12sp" android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Speculative decode card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_spec_draft"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:visibility="gone"
+                app:cardCornerRadius="12dp" app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="🔬 推测解码" android:textStyle="bold" android:textSize="14sp"/>
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:layout_marginTop="6dp">
+                        <TextView android:id="@+id/tv_acceptance"
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:textColor="@color/primary" android:textSize="12sp"/>
+                        <TextView android:id="@+id/tv_speedup"
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:textColor="@color/primary" android:textSize="12sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- CoT reasoning card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_cot"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:visibility="gone"
+                app:cardCornerRadius="12dp" app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="🧠 链式推理分析" android:textStyle="bold" android:textSize="14sp"/>
+                    <TextView android:id="@+id/tv_cot_content"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp" android:text=""
+                        android:textColor="@color/text_primary" android:textSize="13sp"
+                        android:lineSpacingExtra="4dp" android:typeface="monospace"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Final action card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_action"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:visibility="gone"
+                app:cardCornerRadius="12dp" app:cardElevation="3dp">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="16dp">
+                    <TextView android:id="@+id/tv_action_hint"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textColor="@color/text_primary" android:textSize="14sp"
+                        android:lineSpacingExtra="4dp"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_action"
+                        android:layout_width="match_parent" android:layout_height="48dp"
+                        android:layout_marginTop="12dp" android:text="..."
+                        android:textSize="15sp"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Bottom buttons -->
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginTop="16dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_report"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="🚨 举报"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_feedback"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="8dp"
+                    android:text="📝 反馈"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_cancel"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="8dp"
+                    android:text="关闭"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

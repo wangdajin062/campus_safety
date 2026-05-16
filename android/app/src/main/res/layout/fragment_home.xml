@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipe_refresh"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:fillViewport="true" android:background="@color/bg_gray"
+        android:overScrollMode="always">
+
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingBottom="24dp">
+
+            <!-- Hero Card: 问候 + 防护分数 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"
+                android:layout_marginTop="16dp" android:layout_marginBottom="0dp"
+                app:cardBackgroundColor="@color/primary"
+                app:cardCornerRadius="18dp" app:cardElevation="6dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="22dp"
+                    android:background="@drawable/bg_hero_gradient">
+
+                    <!-- 顶部：问候 + 等级徽章 -->
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tv_greeting"
+                                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Hi, 校园守护者"
+                                android:textColor="#CCFFFFFF" android:textSize="14sp"
+                                android:fontFamily="sans-serif-light" android:letterSpacing="0.02"/>
+
+                            <TextView
+                                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="防护状态"
+                                android:textColor="@color/white" android:textSize="20sp"
+                                android:textStyle="bold" android:layout_marginTop="4dp"/>
+                        </LinearLayout>
+
+                        <!-- 等级徽章 -->
+                        <TextView
+                            android:id="@+id/tv_protection_level"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="银盾"
+                            android:textColor="@color/white" android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:background="@drawable/bg_score_circle"
+                            android:paddingStart="18dp" android:paddingEnd="18dp"
+                            android:paddingTop="8dp" android:paddingBottom="8dp"/>
+                    </LinearLayout>
+
+                    <!-- 分数 + 进度条 -->
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical"
+                        android:layout_marginTop="18dp">
+
+                        <TextView
+                            android:id="@+id/tv_protection_score"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="60"
+                            android:textColor="@color/white" android:textSize="52sp"
+                            android:textStyle="bold" android:fontFamily="sans-serif-condensed"/>
+
+                        <LinearLayout
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical"
+                            android:layout_marginStart="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="/ 100 分"
+                                android:textColor="#CCFFFFFF" android:textSize="14sp"/>
+
+                            <ProgressBar
+                                android:id="@+id/progress_protection"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="match_parent" android:layout_height="8dp"
+                                android:layout_marginTop="10dp"
+                                android:max="100" android:progress="60"
+                                android:progressTint="@color/white"
+                                android:progressBackgroundTint="#44FFFFFF"
+                                android:progressDrawable="@null"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 进度条（单独，宽度占满） -->
+                    <ProgressBar
+                        android:id="@+id/progress_bar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent" android:layout_height="8dp"
+                        android:layout_marginTop="14dp"
+                        android:max="100" android:progress="60"
+                        android:progressTint="#AAFFFFFF"
+                        android:progressBackgroundTint="#33FFFFFF"/>
+
+                    <!-- 状态描述 -->
+                    <TextView
+                        android:id="@+id/tv_score_desc"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="您的防护评分良好，继续保持！"
+                        android:textColor="#CCFFFFFF" android:textSize="12sp"
+                        android:fontFamily="sans-serif-light"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 4 大统计卡片 -->
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
+                android:layout_marginTop="14dp">
+
+                <!-- 拦截来电 -->
+                <LinearLayout
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:orientation="vertical"
+                    android:gravity="center" android:padding="14dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/bg_stat_blue"
+                    android:layout_marginBottom="0dp">
+                    <TextView android:id="@+id/tv_blocked_calls"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="0" android:textSize="26sp" android:textStyle="bold"
+                        android:textColor="@color/primary" android:fontFamily="sans-serif-condensed"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="拦截来电" android:textSize="11sp" android:textColor="@color/risk_blue"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+
+                <!-- 短信预警 -->
+                <LinearLayout
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:orientation="vertical"
+                    android:gravity="center" android:padding="14dp"
+                    android:layout_marginStart="5dp" android:layout_marginEnd="5dp"
+                    android:background="@drawable/bg_stat_orange">
+                    <TextView android:id="@+id/tv_alerted_sms"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="0" android:textSize="26sp" android:textStyle="bold"
+                        android:textColor="@color/risk_orange" android:fontFamily="sans-serif-condensed"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="短信预警" android:textSize="11sp" android:textColor="@color/risk_orange"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+
+                <!-- 我的举报 -->
+                <LinearLayout
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:orientation="vertical"
+                    android:gravity="center" android:padding="14dp"
+                    android:layout_marginStart="5dp" android:layout_marginEnd="5dp"
+                    android:background="@drawable/bg_stat_red">
+                    <TextView android:id="@+id/tv_total_reports"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="0" android:textSize="26sp" android:textStyle="bold"
+                        android:textColor="@color/risk_red" android:fontFamily="sans-serif-condensed"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="我的举报" android:textSize="11sp" android:textColor="@color/risk_red"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+
+                <!-- 阅读案例 -->
+                <LinearLayout
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:orientation="vertical"
+                    android:gravity="center" android:padding="14dp"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/bg_stat_green">
+                    <TextView android:id="@+id/tv_cases_read"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="0" android:textSize="26sp" android:textStyle="bold"
+                        android:textColor="@color/risk_green" android:fontFamily="sans-serif-condensed"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="阅读案例" android:textSize="11sp" android:textColor="@color/risk_green"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 快捷入口 -->
+            <TextView
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="20dp" android:layout_marginTop="20dp"
+                android:layout_marginBottom="10dp"
+                android:text="快速操作" android:textSize="15sp" android:textStyle="bold"
+                android:textColor="@color/text_primary" android:fontFamily="sans-serif-medium"/>
+
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="12dp" android:layout_marginEnd="12dp">
+
+                <!-- 查号 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_quick_call"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:clickable="true" android:focusable="true"
+                    app:cardCornerRadius="14dp" app:cardElevation="2dp">
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:gravity="center"
+                        android:padding="18dp" android:background="@drawable/bg_quick_action">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="🔍" android:textSize="28sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp" android:text="查号"
+                            android:textColor="@color/text_primary" android:textSize="14sp"
+                            android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp" android:text="号码风险"
+                            android:textColor="@color/text_hint" android:textSize="11sp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- 案例 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_quick_cases"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="8dp"
+                    android:clickable="true" android:focusable="true"
+                    app:cardCornerRadius="14dp" app:cardElevation="2dp">
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:gravity="center"
+                        android:padding="18dp" android:background="@drawable/bg_quick_action">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="📖" android:textSize="28sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp" android:text="案例"
+                            android:textColor="@color/text_primary" android:textSize="14sp"
+                            android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp" android:text="典型案例"
+                            android:textColor="@color/text_hint" android:textSize="11sp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- 举报 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_quick_report"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="8dp"
+                    android:clickable="true" android:focusable="true"
+                    app:cardCornerRadius="14dp" app:cardElevation="2dp">
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:gravity="center"
+                        android:padding="18dp" android:background="@drawable/bg_quick_action">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="🚨" android:textSize="28sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp" android:text="举报"
+                            android:textColor="@color/text_primary" android:textSize="14sp"
+                            android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp" android:text="提交举报"
+                            android:textColor="@color/text_hint" android:textSize="11sp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+            <!-- 今日提示 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_tip"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="14dp" app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="18dp"
+                    android:background="@drawable/bg_tip_card">
+                    <TextView
+                        android:id="@+id/tv_tip_title"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="💡 今日防骗提示"
+                        android:textColor="@color/risk_green" android:textSize="14sp"
+                        android:textStyle="bold" android:fontFamily="sans-serif-medium"/>
+                    <TextView
+                        android:id="@+id/tv_tip_content"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp" android:text=""
+                        android:textColor="@color/text_primary" android:textSize="14sp"
+                        android:lineSpacingExtra="5dp" android:fontFamily="sans-serif-light"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 最新预警 Header -->
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:layout_marginStart="20dp" android:layout_marginEnd="16dp"
+                android:layout_marginTop="20dp" android:layout_marginBottom="10dp">
+                <TextView
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🔔 最新预警"
+                    android:textStyle="bold" android:textSize="16sp"
+                    android:textColor="@color/text_primary" android:fontFamily="sans-serif-medium"/>
+                <TextView
+                    android:id="@+id/tv_more_alerts"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="查看全部 ›"
+                    android:textColor="@color/primary" android:textSize="13sp"
+                    android:clickable="true" android:focusable="true"
+                    android:padding="6dp"/>
+            </LinearLayout>
+
+            <!-- 预警预览列表 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_alerts_preview"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"/>
+
+            <TextView
+                android:id="@+id/tv_empty_alerts"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:gravity="center" android:padding="24dp"
+                android:text="暂无预警消息"
+                android:textColor="@color/text_hint" android:textSize="14sp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

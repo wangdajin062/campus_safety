@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipe_refresh"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@color/bg_gray">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_alerts"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:padding="10dp" android:clipToPadding="false"
+            android:overScrollMode="always" android:scrollbars="vertical"/>
+
+        <TextView
+            android:id="@+id/tv_empty"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_gravity="center" android:gravity="center"
+            android:padding="40dp" android:text="@string/empty_alerts"
+            android:textColor="@color/text_hint" android:textSize="14sp"
+            android:visibility="gone"/>
+    </FrameLayout>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

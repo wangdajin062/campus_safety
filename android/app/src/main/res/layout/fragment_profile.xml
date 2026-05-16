@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipe_refresh"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <ScrollView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@color/bg_gray" android:fillViewport="true">
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="16dp">
+
+            <!-- User card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                app:cardCornerRadius="14dp" app:cardElevation="3dp">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical" android:padding="20dp">
+                    <ImageView android:layout_width="56dp" android:layout_height="56dp"
+                        android:src="@drawable/ic_person" android:background="@drawable/bg_risk_green"
+                        android:padding="12dp" app:tint="@color/primary"/>
+                    <LinearLayout
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+                        <TextView android:id="@+id/tv_nickname"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="用户" android:textSize="18sp" android:textStyle="bold"
+                            android:textColor="@color/text_primary"/>
+                        <TextView android:id="@+id/tv_phone"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:text=""
+                            android:textColor="@color/text_secondary" android:textSize="13sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Protection card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="14dp" app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/primary">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="20dp">
+                    <TextView
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="🛡️ 当前防护等级" android:textColor="#CCFFFFFF" android:textSize="13sp"/>
+                    <LinearLayout
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="8dp">
+                        <TextView android:id="@+id/tv_protection_score"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="60" android:textColor="@color/white"
+                            android:textSize="36sp" android:textStyle="bold"/>
+                        <TextView
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="4dp" android:text="/100"
+                            android:textColor="#CCFFFFFF" android:textSize="14sp"/>
+                        <TextView android:id="@+id/tv_protection_level"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="银盾" android:textColor="@color/white"
+                            android:textSize="16sp" android:textStyle="bold"/>
+                    </LinearLayout>
+                    <ProgressBar android:id="@+id/progress_protection"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent" android:layout_height="5dp"
+                        android:layout_marginTop="10dp" android:max="100" android:progress="60"
+                        android:progressTint="@color/white" android:progressBackgroundTint="#44FFFFFF"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 4 stats inline -->
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginTop="12dp">
+                <include layout="@layout/item_stat_profile" android:id="@+id/inc_calls"/>
+            </LinearLayout>
+
+            <!-- Quick stats (simple 4-column) -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="12dp" app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:padding="16dp">
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tv_blocked_calls" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="0"
+                            android:textStyle="bold" android:textSize="20sp" android:textColor="@color/primary"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:text="拦截来电"
+                            android:textSize="11sp" android:textColor="@color/text_secondary"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tv_alerted_sms" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="0"
+                            android:textStyle="bold" android:textSize="20sp" android:textColor="@color/risk_orange"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:text="短信预警"
+                            android:textSize="11sp" android:textColor="@color/text_secondary"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tv_total_reports" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="0"
+                            android:textStyle="bold" android:textSize="20sp" android:textColor="@color/risk_red"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:text="我的举报"
+                            android:textSize="11sp" android:textColor="@color/text_secondary"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                        <TextView android:id="@+id/tv_cases_read" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="0"
+                            android:textStyle="bold" android:textSize="20sp" android:textColor="@color/risk_green"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:text="案例阅读"
+                            android:textSize="11sp" android:textColor="@color/text_secondary"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_settings"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" android:text="设置"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_logout"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:text="退出登录"
+                android:textColor="@color/risk_red"
+                app:strokeColor="@color/risk_red"/>
+        </LinearLayout>
+    </ScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

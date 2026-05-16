@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:layout_marginHorizontal="4dp" android:layout_marginVertical="3dp"
+    android:clickable="true" android:focusable="true"
+    app:cardCornerRadius="10dp" app:cardElevation="1dp">
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:padding="14dp">
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical">
+            <TextView android:id="@+id/tv_phone"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="****" android:textSize="15sp" android:textStyle="bold"
+                android:textColor="@color/text_primary"/>
+            <TextView android:id="@+id/tv_time"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="2dp" android:text=""
+                android:textSize="11sp" android:textColor="@color/text_hint"/>
+        </LinearLayout>
+        <TextView android:id="@+id/tv_score"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="0" android:textSize="18sp" android:textStyle="bold"
+            android:textColor="@color/primary" android:layout_marginEnd="12dp"/>
+        <TextView android:id="@+id/tv_risk_level"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:background="@drawable/bg_chip_orange"
+            android:text="" android:textColor="@color/risk_orange" android:textSize="11sp" android:textStyle="bold"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
