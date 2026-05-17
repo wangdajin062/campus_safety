@@ -44,6 +44,18 @@ N_MELS          = 64
 # DP 参数（论文 Table IX，默认关闭）
 DP_SIGMA_DEFAULT = 0.0
 SENSITIVITY_L2   = 2.0    # 实验验证的 ℓ₂ 敏感度上界
+DP_DELTA         = 1e-5   # δ 参数
+
+
+def calc_dp_epsilon(sigma: float, delta: float = DP_DELTA) -> float:
+    """
+    论文 §III.B Gaussian Mechanism 真实 ε 计算：
+        ε = Δ₂ · sqrt(2 · ln(1.25/δ)) / σ
+    修复：v4.1 之前误用 Δ₂/σ，高估了隐私保护强度
+    """
+    if sigma <= 0:
+        return float("inf")
+    return SENSITIVITY_L2 * math.sqrt(2.0 * math.log(1.25 / delta)) / sigma
 
 
 # ── 数据容器 ───────────────────────────────────────────────
@@ -350,7 +362,7 @@ class AcousticEmbeddingExtractor:
         if self.dp_sigma > 0:
             embed  = (embed + np.random.normal(0, self.dp_sigma, EMBEDDING_DIM)).astype(np.float32)
             is_dp  = True
-            dp_eps = SENSITIVITY_L2 / (self.dp_sigma + 1e-9)
+            dp_eps = calc_dp_epsilon(self.dp_sigma)
 
         ms = (time.perf_counter() - t0) * 1000
         logger.debug("AcousticEmbed %.1f ms  dur=%.2fs  dp=%s",
@@ -432,7 +444,7 @@ class AcousticEmbeddingExtractor:
             "is_non_invertible": wer >= 0.90,
             "pipl_compliant":    True,
             "mutual_info_approx":"≈0 (time-averaging destroys phoneme sequence)",
-            "dp_available":      "σ=1.0 → (ε=1.5, δ=1e-5)-DP",
+            "dp_available":      f"σ=1.0 → (ε={calc_dp_epsilon(1.0, DP_DELTA):.2f}, δ=1e-5)-DP",
         }
 
 

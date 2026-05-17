@@ -229,10 +229,18 @@ async def update_case(
     if not case:
         raise HTTPException(404, "案例不存在")
 
-    updatable = ["title", "summary", "content", "category", "risk_level", "emoji", "tags", "status", "is_featured"]
+    updatable = {"title", "summary", "content", "category", "risk_level", "emoji", "tags", "status", "is_featured"}
+    string_fields = {"title", "summary", "content", "category", "risk_level", "emoji", "status"}
     for field in updatable:
-        if field in body:
-            setattr(case, field, body[field])
+        if field not in body:
+            continue
+        val = body[field]
+        # 类型校验
+        if field in string_fields and not isinstance(val, str):
+            raise HTTPException(400, f"字段 {field} 必须为字符串")
+        if field == "is_featured" and not isinstance(val, bool):
+            raise HTTPException(400, "is_featured 必须为布尔值")
+        setattr(case, field, val)
 
     return {"code": 200, "data": {"message": "案例已更新"}}
 

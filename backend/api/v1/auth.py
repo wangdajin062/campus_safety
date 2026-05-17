@@ -9,7 +9,7 @@ import secrets, hashlib, datetime, hmac as hmac_lib
 
 from core.database import get_db
 from core.redis import CacheService
-from core.security import sha256, mask_phone, create_tokens, decode_token
+from core.security import sha256, phone_hash, mask_phone, create_tokens, decode_token, blacklist_token
 from core.config import settings
 from models.user import User
 from schemas.schemas import SendCodeRequest, LoginRequest, TokenResponse
@@ -31,8 +31,8 @@ async def send_code(body: SendCodeRequest, request: Request):
         raise HTTPException(status_code=400, detail="无效的手机号")
     
     code = str(secrets.randbelow(900000) + 100000)
-    phone_hash = sha256(body.phone)
-    code_key = f"sms_code:{phone_hash}"
+    ph = phone_hash(body.phone)
+    code_key = f"sms_code:{ph}"
     
     # ✅ 存入 Redis，300秒过期
     try:
@@ -73,8 +73,9 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     3. 颁发双令牌（access + refresh）
     """
     # ✅ 步骤 1: 校验验证码（防暴力破解）
-    phone_hash = sha256(body.phone)
-    code_key = f"sms_code:{phone_hash}"
+    # 优先使用 PBKDF2 哈希，兼容旧版 SHA256
+    ph = phone_hash(body.phone)
+    code_key = f"sms_code:{ph}"
     
     try:
         stored_code = await CacheService.get(code_key)
@@ -104,15 +105,22 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.warning(f"Redis delete failed: {e}")
     
-    # ✅ 步骤 2: 查找或创建用户
+    # ✅ 步骤 2: 查找或创建用户（向后兼容旧 SHA256 哈希）
     try:
-        result = await db.execute(select(User).where(User.phone_hash == phone_hash))
+        result = await db.execute(select(User).where(User.phone_hash == ph))
         user = result.scalar_one_or_none()
 
         if not user:
+            legacy_ph = sha256(body.phone)
+            result = await db.execute(select(User).where(User.phone_hash == legacy_ph))
+            user = result.scalar_one_or_none()
+            if user:
+                user.phone_hash = ph
+
+        if not user:
             user = User(
-                phone=mask_phone(body.phone), 
-                phone_hash=phone_hash,
+                phone=mask_phone(body.phone),
+                phone_hash=ph,
                 nickname="校园守护者"
             )
             db.add(user)
@@ -131,7 +139,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
         )
     
     # ✅ 步骤 3: 颁发双令牌（access + refresh）
-    tokens = create_tokens(user.id, phone_hash)
+    tokens = create_tokens(user.id, ph)
     return {
         "code": 200,
         "data": {
@@ -182,27 +190,40 @@ async def refresh(request: Request, db: AsyncSession = Depends(get_db)):
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found or disabled")
-    
-    # ✅ 颁发新的 access_token（refresh_token 保持不变）
+
+    # H4: Refresh Token Rotation — 旧 refresh_token 加入黑名单
+    import time as _time
+    refresh_exp = payload.get("exp", _time.time() + 86400)
+    remaining = max(60, int(refresh_exp - _time.time()))
+    await blacklist_token(refresh_token, expire_seconds=remaining)
+
+    # ✅ 颁发全新双令牌（access + 新 refresh_token）
     tokens = create_tokens(user.id, user.phone_hash)
-    
+
     return {
         "code": 200,
         "data": {
             "access_token": tokens["access_token"],
+            "refresh_token": tokens["refresh_token"],
             "token_type": tokens["token_type"],
             "expires_in": tokens["expires_in"],
         }
     }
 
 
-@router.post("/logout", summary="登出")
+@router.post("/logout", summary="登出（吊销当前 access_token）")
 async def logout(request: Request):
     """
-    可选：撤销 token（实现黑名单）
-    当前简单实现（客户端删除 token）
+    H5: 从 Authorization header 提取 access_token 并加入黑名单
+    客户端应在调用后删除本地存储的所有 token
     """
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        token = auth[7:]
+        # 吊销 access_token（TTL = JWT_EXPIRE_DAYS）
+        await blacklist_token(token, expire_seconds=int(settings.JWT_EXPIRE_DAYS * 86400))
+
     return {
         "code": 200,
-        "message": "已登出，请删除本地 token"
+        "message": "已登出，Token 已吊销"
     }

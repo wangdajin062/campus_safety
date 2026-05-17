@@ -202,6 +202,7 @@ class SpeculativeDecoder:
         self.draft_model  = FraudDraftModel()
         self.verify_model = FraudVerifyModel()
         self.stats        = DecodingStats()
+        self._feedback_lock = asyncio.Lock()
 
     async def analyze_stream(self, content: str) -> AsyncGenerator[dict, None]:
         t0 = time.perf_counter(); self.stats = DecodingStats()
@@ -271,15 +272,31 @@ class SpeculativeDecoder:
         else:             lv, cf = "safe",   0.92
         return {"level":lv,"score":score,"confidence":cf}
 
-    def record_feedback(self, sample_hash, true_label, features):
-        p = Path("ml/models/feedback.jsonl")
-        p.parent.mkdir(parents=True, exist_ok=True)
-        with open(p,"a") as f:
-            f.write(json.dumps({
-                "hash": str(sample_hash)[:64],
-                "label": int(true_label),
-                "features": [float(x) for x in list(features)[:30]],
-            }) + "\n")
+    @staticmethod
+    def _feedback_path() -> Path:
+        """基于代码位置的绝对路径，避免 CWD 依赖"""
+        return Path(__file__).resolve().parent.parent / "ml" / "models" / "feedback.jsonl"
+
+    async def record_feedback(self, sample_hash, true_label, features):
+        async with self._feedback_lock:
+            p = self._feedback_path()
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with open(p, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "hash": str(sample_hash)[:64],
+                    "label": int(true_label),
+                    "features": [float(x) for x in list(features)[:30]],
+                }, ensure_ascii=False) + "\n")
+
+    def feedback_count(self) -> int:
+        p = self._feedback_path()
+        if not p.exists():
+            return 0
+        count = 0
+        with open(p, "r", encoding="utf-8") as f:
+            for _ in f:
+                count += 1
+        return count
 
 
 spec_decoder = SpeculativeDecoder()

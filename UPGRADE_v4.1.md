@@ -92,3 +92,62 @@
 ```
 
 测试覆盖：AST 语法检查 × 6，§III.A QAD 参数 × 6，§III.B 声学嵌入 × 9，§IV 推测解码 × 7，多模态融合 × 4，Bug 修复 × 4，Android 文件 × 3。
+
+---
+
+## 安全修复（2026-05）
+
+### C1 · 死代码崩溃
+**位置**: `inference.py` 模块级残留重复路由定义（~300 行）
+**问题**: 引用未定义变量 `body` → 导入时 NameError，应用无法启动
+**修复**: 删除行 445-767 全部死代码，文件从 767 行缩减至 445 行
+
+### H1 · Feedback 文件竞态
+**位置**: `speculative_decoder.py` `record_feedback()`
+**问题**: 多并发写入 feedback.jsonl 导致数据损坏
+**修复**: 添加 `asyncio.Lock` 保护写入，新增 `feedback_count()` 统计算法
+
+### H2 · Retrain 无限触发
+**位置**: `inference.py` `/v1/infer/retrain`
+**问题**: 无速率限制 + 不追踪并发 → 可耗尽算力
+**修复**: 添加 `rate_limit(max_calls=1, window=300)` + 全局 `_retrain_in_progress` 标志
+
+### H3 · 无盐手机号哈希
+**位置**: `security.py` `sha256(phone)` → `phone_hash()`
+**问题**: SHA256 无盐 → 彩虹表可还原 11 位手机号
+**修复**: PBKDF2-HMAC-SHA256（100000 迭代，以 SECRET_KEY 为盐）+ 登录时向后兼容旧哈希
+
+### H4 · Refresh Token 无轮换
+**位置**: `auth.py` `/v1/auth/refresh`
+**问题**: 旧 refresh_token 泄露后可用作后门
+**修复**: 每次刷新签发全新 refresh_token，旧 token 加入 Redis 黑名单
+
+### H5 · 无 Token 吊销
+**位置**: `security.py` `get_current_user()` / `auth.py` `/logout`
+**问题**: 登出后 token 仍有效；无法强制下线
+**修复**: JWT 增加 `jti` 字段 + Redis 黑名单（TTL 匹配 token 有效期）+ logout 端点加入黑名单
+
+### H6 · DP ε 计算错误
+**位置**: `acoustic_embedding.py` `dp_eps = Δ₂/σ`
+**问题**: 高估隐私保护强度（声称 ε=1.5，实际 ≈9.69）
+**修复**: 实现正确公式 `ε = Δ₂ · sqrt(2 · ln(1.25/δ)) / σ`
+
+### M1 · Redis 故障不限流
+**位置**: `rate_limit.py`
+**问题**: 非敏感端点 Redis 故障时降级为不限流 → 推理算力耗尽
+**修复**: 统一拒绝（503），不再区分敏感/非敏感
+
+### M2 · 反代 IP 检测
+**位置**: `rate_limit.py`
+**问题**: `request.client.host` 在反代后始终是代理 IP
+**修复**: 优先读取 `X-Forwarded-For` 头
+
+### M3 · feedback.jsonl 相对路径
+**位置**: 多文件
+**问题**: 依赖 CWD，线上路径不匹配时出错
+**修复**: 使用 `_feedback_path()` 基于 `__file__` 的绝对路径
+
+### M5 · Admin setattr 无类型校验
+**位置**: `admin.py`
+**问题**: `setattr` 接受任意类型值
+**修复**: 白名单 + `isinstance` 类型校验

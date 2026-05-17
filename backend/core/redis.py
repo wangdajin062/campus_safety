@@ -141,6 +141,18 @@ class SmsCodeService:
 class CacheService:
 
     @staticmethod
+    async def get(key: str) -> Optional[str]:
+        """获取原始字符串值（兼容 auth.py 中的验证码查询）"""
+        redis = await get_redis()
+        return await redis.get(key)
+
+    @staticmethod
+    async def setex(key: str, seconds: int, value: Any) -> None:
+        """设置带过期时间的键值对（兼容 auth.py 中的验证码存储）"""
+        redis = await get_redis()
+        await redis.setex(key, seconds, value)
+
+    @staticmethod
     async def get_json(key: str) -> Optional[Any]:
         redis = await get_redis()
         val = await redis.get(key)

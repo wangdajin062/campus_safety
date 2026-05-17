@@ -338,10 +338,19 @@ async def client():
         yield c
 
 
+async def _seed_code(phone: str, code: str) -> None:
+    """Pre-seed SMS code in MemoryCache for testing."""
+    from core.redis import CacheService
+    from core.security import phone_hash
+    ph = phone_hash(phone)
+    await CacheService.setex(f"sms_code:{ph}", 300, code)
+
+
 async def get_admin_token(client: AsyncClient) -> str:
     """创建管理员用户（protection_score=99）并获取 Token"""
+    await _seed_code("13900000001", "000000")
     r = await client.post("/v1/auth/login", json={"phone": "13900000001", "code": "000000"})
-    token = r.json()["data"]["token"]
+    token = r.json()["data"]["access_token"]
 
     # 直接设置管理员标识
     from models.user import User
@@ -357,8 +366,9 @@ class TestAdminAPI:
     @pytest.mark.asyncio
     async def test_dashboard_requires_admin(self, client: AsyncClient):
         """普通用户无法访问管理后台"""
+        await _seed_code("13800000001", "111111")
         r = await client.post("/v1/auth/login", json={"phone": "13800000001", "code": "111111"})
-        token = r.json()["data"]["token"]
+        token = r.json()["data"]["access_token"]
         r2 = await client.get("/v1/admin/dashboard", headers={"Authorization": f"Bearer {token}"})
         assert r2.status_code == 403
 
@@ -421,8 +431,9 @@ class TestAdminAPI:
     async def test_approve_report_flow(self, client: AsyncClient):
         """举报 → 审核通过 → 诈骗库入库 完整流程"""
         # 普通用户提交举报
+        await _seed_code("13700000001", "111111")
         user_r = await client.post("/v1/auth/login", json={"phone": "13700000001", "code": "111111"})
-        user_token = user_r.json()["data"]["token"]
+        user_token = user_r.json()["data"]["access_token"]
         report_r = await client.post("/v1/reports", json={
             "report_type": "phone", "target": "13666666666"
         }, headers={"Authorization": f"Bearer {user_token}"})

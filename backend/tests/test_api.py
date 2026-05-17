@@ -58,10 +58,19 @@ async def client(db_engine):
     app.dependency_overrides.clear()
 
 
+async def _seed_code(phone: str, code: str = "123456") -> None:
+    """Pre-seed SMS code in MemoryCache for testing."""
+    from core.redis import CacheService
+    from core.security import phone_hash
+    ph = phone_hash(phone)
+    await CacheService.setex(f"sms_code:{ph}", 300, code)
+
+
 async def get_token(client: AsyncClient, phone: str = "13800138000") -> str:
+    await _seed_code(phone, "123456")
     r = await client.post("/v1/auth/login", json={"phone": phone, "code": "123456"})
     assert r.status_code == 200, f"Login failed: {r.text}"
-    return r.json()["data"]["token"]
+    return r.json()["data"]["access_token"]
 
 
 # ══ AUTH ══════════════════════════════════════════════════
@@ -80,16 +89,18 @@ async def test_send_code_invalid_phone(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_login_creates_new_user(client: AsyncClient):
+    await _seed_code("13900139000", "123456")
     r = await client.post("/v1/auth/login", json={"phone": "13900139000", "code": "123456"})
     assert r.status_code == 200
     data = r.json()["data"]
-    assert "token" in data
+    assert "access_token" in data
     assert data["user"]["id"] > 0
 
 
 @pytest.mark.asyncio
 async def test_login_idempotent(client: AsyncClient):
     for _ in range(2):
+        await _seed_code("13900139000", "123456")
         r = await client.post("/v1/auth/login", json={"phone": "13900139000", "code": "123456"})
         assert r.status_code == 200
 
