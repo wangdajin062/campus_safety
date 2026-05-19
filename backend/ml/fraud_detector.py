@@ -85,7 +85,8 @@ class RuleEngine:
 
 
 class GradientBoostingDetector:
-    MODEL_PATH  = Path("ml/models/fraud_detector.pkl")
+    _BASE_DIR   = Path(__file__).resolve().parent
+    MODEL_PATH  = _BASE_DIR / "models" / "fraud_detector.pkl"
     FEATURE_DIM = 12
 
     def __init__(self):
@@ -195,14 +196,14 @@ class EnsembleDetector:
             ml_probability=ml_prob, ml_risk_level=ml_level)
 
     def record_feedback(self, sample_hash: str, true_label: int, features: np.ndarray):
-        fb_path = Path("ml/models/feedback.jsonl")
+        fb_path = self.gb_model.MODEL_PATH.parent / "feedback.jsonl"
         fb_path.parent.mkdir(parents=True, exist_ok=True)
         with open(fb_path, "a") as f:
             f.write(json.dumps({"hash":sample_hash,"label":true_label,
                                 "features":features.tolist()}) + "\n")
 
     def retrain_from_feedback(self):
-        fb_path = Path("ml/models/feedback.jsonl")
+        fb_path = self.gb_model.MODEL_PATH.parent / "feedback.jsonl"
         if not fb_path.exists(): return
         X, y = [], []
         with open(fb_path) as f:
@@ -228,6 +229,136 @@ class EnsembleDetector:
             logger.info("Model retrained on %d samples", len(y))
         except ImportError:
             logger.warning("sklearn not available, skipping retrain")
+
+
+    # ── 评估 ──────────────────────────────────────────────────
+    def evaluate(self, X_test: np.ndarray, y_test: np.ndarray) -> dict:
+        """
+        在测试集上评估 GBM 模型。
+
+        返回:
+            accuracy, precision, recall, f1, roc_auc, 以及按风险等级的细分指标。
+        """
+        result = {
+            "accuracy": 0.0, "precision": 0.0, "recall": 0.0,
+            "f1_score": 0.0, "roc_auc": 0.0,
+            "samples": int(len(y_test)), "positives": int(y_test.sum()),
+        }
+        try:
+            from sklearn.metrics import (
+                accuracy_score, precision_score, recall_score,
+                f1_score, roc_auc_score, classification_report,
+            )
+
+            if self.gb_model._model is None:
+                logger.warning("GBM 模型未加载，使用回退权重评估")
+                preds = []
+                for i in range(len(X_test)):
+                    p = self.gb_model.predict(X_test[i])
+                    preds.append(1 if p >= 0.5 else 0)
+                y_pred = np.array(preds)
+                y_prob = np.array([self.gb_model.predict(X_test[i])
+                                    for i in range(len(X_test))])
+            else:
+                y_pred = self.gb_model._model.predict(X_test)
+                y_prob = self.gb_model._model.predict_proba(X_test)[:, 1]
+
+            result["accuracy"]  = round(float(accuracy_score(y_test, y_pred)), 4)
+            result["precision"] = round(float(precision_score(y_test, y_pred, zero_division=0)), 4)
+            result["recall"]    = round(float(recall_score(y_test, y_pred, zero_division=0)), 4)
+            result["f1_score"]  = round(float(f1_score(y_test, y_pred, zero_division=0)), 4)
+            result["roc_auc"]   = round(float(roc_auc_score(y_test, y_prob)), 4)
+
+            # 等级细分（风险评分映射）
+            threshold_high  = np.percentile(y_prob, 70) if len(y_prob) > 0 else 0.7
+            threshold_med   = np.percentile(y_prob, 35) if len(y_prob) > 0 else 0.35
+            levels = []
+            for p, t in zip(y_prob, y_test):
+                if p >= threshold_high:
+                    levels.append(("high", t))
+                elif p >= threshold_med:
+                    levels.append(("medium", t))
+                else:
+                    levels.append(("safe", t))
+
+            for level_name in ("high", "medium", "safe"):
+                group = [(p, t) for p, t in zip(y_prob, y_test)
+                         if (p >= threshold_high and level_name == "high")
+                         or (threshold_med <= p < threshold_high and level_name == "medium")
+                         or (p < threshold_med and level_name == "safe")]
+                if group:
+                    _, gt = zip(*group)
+                    result[f"{level_name}_count"] = len(group)
+                    result[f"{level_name}_fraud_ratio"] = round(sum(gt) / len(gt), 3)
+
+            result["classification_report"] = classification_report(
+                y_test, y_pred, output_dict=True, zero_division=0
+            )
+            logger.info(
+                "评估完成: acc=%.4f, prec=%.4f, rec=%.4f, f1=%.4f, auc=%.4f (n=%d)",
+                result["accuracy"], result["precision"], result["recall"],
+                result["f1_score"], result["roc_auc"], len(y_test),
+            )
+
+        except ImportError as e:
+            logger.warning("评估指标不可用: %s", e)
+            result["error"] = str(e)
+        except Exception as e:
+            logger.error("评估失败: %s", e)
+            result["error"] = str(e)
+
+        return result
+
+    # ── 从 TeleAntiFraud 数据训练 ─────────────────────────────
+    def train_from_teleantifraud(
+        self, max_samples: int = 4000
+    ) -> dict:
+        """
+        使用 TeleAntiFraud 真实数据训练 GBM 模型。
+
+        步骤:
+          1. 通过 TeleAntiFraudLoader 加载数据
+          2. 用训练集调用 self.train()
+          3. 在测试集上调用 self.evaluate()
+          4. 返回训练&评估结果
+
+        返回:
+            {"status", "train_samples", "evaluation": {...}}
+        """
+        try:
+            from ml.data_loader import TeleAntiFraudLoader
+
+            loader = TeleAntiFraudLoader()
+            data = loader.load_train_test(max_samples=max_samples)
+
+            if data is None:
+                return {"status": "error", "message": "TeleAntiFraud 数据不可用"}
+
+            X_train, y_train = data["X_train"], data["y_train"]
+            X_test, y_test = data["X_test"], data["y_test"]
+
+            logger.info(
+                "开始 TeleAntiFraud 训练: 训练集=%d, 测试集=%d, 特征维=%d",
+                len(X_train), len(X_test), X_train.shape[1],
+            )
+
+            self.train(X_train, y_train)
+
+            eval_result = self.evaluate(X_test, y_test)
+
+            result = {
+                "status": "success",
+                "train_samples": int(len(y_train)),
+                "test_samples": int(len(y_test)),
+                "feature_dim": int(X_train.shape[1]),
+                "evaluation": eval_result,
+            }
+            logger.info("TeleAntiFraud 训练完成: %s", result["status"])
+            return result
+
+        except Exception as e:
+            logger.exception("TeleAntiFraud 训练失败")
+            return {"status": "error", "message": str(e)}
 
 
 detector = EnsembleDetector()

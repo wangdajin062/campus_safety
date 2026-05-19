@@ -1,0 +1,41 @@
+flowchart TB
+    subgraph Android["Android Client (Java)"]
+        direction TB
+        SR[SmsReceiver] --> SFE[SmsFeatureExtractor\nFeatures.extract]
+        SFE --> QR[quickScore\nquickRiskLevel]
+        SFE -- 12d SMS + 6d URL --> REQ[MultimodalRequest\nbuildRequest]
+        AEE[AcousticEmbedding\n128-dim F_v] --> REQ
+        OLE[OnDeviceLLMEngine] --> SD[SpeculativeDecoder\ngenerateDraft gamma=5]
+        SD -- alpha=0.86 prior --> REQ
+        OLE -- quickRisk keywords --> NOTIF[Notification\nHigh Risk Alert]
+    end
+
+    subgraph API["API Layer (FastAPI)"]
+        direction TB
+        EP[Inference Endpoints] --> RL[rate_limit\nRedis Token Bucket]
+        EP --> AUTH[JWT Auth\nget_current_user]
+        EP --> MD[MultimodalDetector\nSSE detect_stream]
+    end
+
+    subgraph Backend["Server (Python)"]
+        MD --> RE[RuleEngine\nKeyword Rules]
+        MD --> GBM[GradientBoosting\nGBM Classifier]
+        MD --> FUSION[L-BFGS Fusion\nw_text=0.40 w_audio=0.30\nw_url=0.20 w_meta=0.10]
+        FUSION --> RES[risk_level\nrisk_score url_score]
+        SD_VER[SpecDecoder.verify\nServer Verification] --> RES
+        QAD[QAD Pipeline\nL = 0.4 L_task + 0.5 L_KD + 0.1 L_quant] --> SD_VER
+        AE[AcousticExtractor\nvoice_risk_score\n4-way Prosody] --> EP
+        FB[record_feedback\nfeedback.jsonl] --> QAD
+    end
+
+    subgraph Data["Data Layer"]
+        DB[(PostgreSQL\n13 tables)]
+        RD[(Redis\nSMS Code / Rate Limit\nToken Blacklist)]
+        MDL[(GGUF Model\nQwen2.5-0.5B Q4_K_M\n240MB 24-layer)]
+    end
+
+    REQ -- HTTP/JSON --> EP
+    RES --> Android
+    QAD --> MDL
+    API --> DB
+    API --> RD

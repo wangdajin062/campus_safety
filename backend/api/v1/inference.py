@@ -41,12 +41,42 @@ from ml.multimodal_detector import MultimodalInput, multimodal_detector
 from ml.acoustic_embedding import acoustic_extractor, EMBEDDING_DIM
 from ml.qad_pipeline import qad_pipeline
 from ml.speculative_decoder import spec_decoder, STUDENT_ARCH
+from ml.fraud_detector import EnsembleDetector, detector as ensemble_detector
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # ── 全局重训标志位（防止并发重训 H2）────────────────────────────
 _retrain_in_progress: bool = False
+
+# ── 启动时自动加载 GBM ─────────────────────────────────────
+_warmup_attempted = False
+
+
+def _warmup_gbm():
+    """启动时自动检查并训练 GBM（若 PKL 不存在但缓存可用）"""
+    global _warmup_attempted
+    if _warmup_attempted:
+        return
+    _warmup_attempted = True
+    if ensemble_detector.gb_model._model is not None:
+        logger.info("GBM model loaded from %s", ensemble_detector.gb_model.MODEL_PATH)
+        return
+    try:
+        from ml.data_loader import TeleAntiFraudLoader
+        loader = TeleAntiFraudLoader()
+        data = loader.load_train_test(max_samples=2000)
+        if data is not None:
+            logger.info("Warmup: training GBM from TeleAntiFraud cache (%d samples)...",
+                        len(data["X_train"]))
+            ensemble_detector.train(data["X_train"], data["y_train"])
+            logger.info("Warmup: GBM trained and saved to %s",
+                        ensemble_detector.gb_model.MODEL_PATH)
+    except Exception as e:
+        logger.warning("GBM warmup skipped: %s", e)
+
+
+_warmup_gbm()
 
 
 # ── Schema ────────────────────────────────────────────────
@@ -446,5 +476,78 @@ async def acoustic_non_invertibility_test(
                 "dp_available":             "σ=1.0 → (ε=9.69, δ=1e-5)-DP",
             },
             "non_invertibility_test": test_result,
+        },
+    }
+
+
+# ── POST /evaluate ─────────────────────────────────────────
+@router.post("/evaluate", summary="在 TeleAntiFraud 测试集上评估当前模型")
+async def evaluate_model(
+    _=Depends(partial(rate_limit, max_calls=10, window=60)),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    使用 TeleAntiFraud 测试集评估当前 GBM + 规则引擎性能。
+
+    返回准确率/召回率/F1/AUC 以及按风险等级的细分。
+    """
+    try:
+        from ml.data_loader import TeleAntiFraudLoader
+        loader = TeleAntiFraudLoader()
+
+        data = loader.load_train_test(max_samples=4000)
+        if data is None:
+            raise HTTPException(status_code=503, detail="TeleAntiFraud 数据不可用")
+
+        result = ensemble_detector.evaluate(data["X_test"], data["y_test"])
+
+        return {
+            "code": 200,
+            "data": {
+                "evaluation": result,
+                "test_samples": int(len(data["y_test"])),
+                "feature_dim": int(data["X_test"].shape[1]),
+                "model_loaded": ensemble_detector.gb_model._model is not None,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("评估失败")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── POST /train-from-data ───────────────────────────────────
+@router.post("/train-from-data", summary="用 TeleAntiFraud 数据重训 GBM（管理员）")
+async def train_from_teleantifraud(
+    _=Depends(partial(rate_limit, max_calls=1, window=300)),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    使用 TeleAntiFraud 全部训练数据重新训练 GBM 模型。
+
+    权限要求：管理员 (role == "admin" 或 protection_score == 99)。
+    训练完成后自动在测试集上评估并返回指标。
+    """
+    is_admin = (
+        getattr(current_user, "role", None) == "admin"
+        or current_user.protection_score == 99
+    )
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="需要管理员权限")
+
+    result = ensemble_detector.train_from_teleantifraud(max_samples=4000)
+
+    if result["status"] == "error":
+        raise HTTPException(status_code=500, detail=result.get("message", "训练失败"))
+
+    return {
+        "code": 200,
+        "data": {
+            "message": "GBM 模型训练完成",
+            "train_samples": result["train_samples"],
+            "test_samples": result["test_samples"],
+            "feature_dim": result["feature_dim"],
+            "evaluation": result["evaluation"],
         },
     }

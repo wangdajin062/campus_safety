@@ -27,7 +27,7 @@ campus_safety_v3/
 │   ├── models/                     # SQLAlchemy ORM (13张表)
 │   ├── schemas/                    # Pydantic 请求/响应校验
 │   ├── services/                   # 短信 / FCM / 调度器
-│   └── tests/                      # 49+ 测试用例
+│   └── tests/                      # 61 测试（API + 扩展 + 安全回归）
 ├── android/                        # Java Android 前端
 │   └── src/main/java/com/campus/safety/
 │       ├── engine/OnDeviceLLMEngine.java    # ★ 端侧 llama.cpp 推理
@@ -169,6 +169,52 @@ ov-freeze: 冻结 {o_proj, v_proj, q_proj, k_proj} 敏感层
 | POST | `/v1/reports` | 用户举报 |
 | GET  | `/v1/user/stats` | 防护统计 |
 | `*`  | `/v1/admin/*` | 管理后台（16个接口）|
+
+---
+
+## 🧪 测试指南
+
+### 后端测试
+
+```bash
+cd backend
+pip install -r requirements.txt
+SECRET_KEY="test_secret_key_32_characters_long_ok" python -m pytest tests/ -v
+# 预期结果：61 passed / 0 failed
+```
+
+| 测试套件 | 数量 | 覆盖内容 |
+|---------|------|---------|
+| `test_api.py` | 22 | 认证/通话/短信/案例/举报/警报/推理端点 |
+| `test_extended.py` | 30 | 缓存/短信服务/推送/调度器/管理后台 |
+| `test_security.py` | 9 | C1/H1-H6/M3/M5 安全回归 |
+
+### Android 端测试（蒸馏模型 + 特征提取）
+
+```bash
+cd android
+# 确保 Android SDK 已配置（ANDROID_HOME）
+
+# 运行全部单元测试
+./gradlew test
+
+# 运行特定蒸馏模型测试
+./gradlew test --tests "com.campus.safety.ml.SpeculativeDecoderTest"
+```
+
+| 测试类 | 数量 | 覆盖内容 |
+|--------|------|---------|
+| `SpeculativeDecoderTest` | 13 | 加速比公式(6)、α接受率、诈骗类别检测、草稿生成、验证逻辑 |
+| `OnDeviceLLMEngineTest` | 16 | quickRisk关键词评分、URL加分、风险等级判定 |
+| `SmsFeatureExtractorTest` | 20 | 12维SMS向量、6维URL特征、12维来电特征、buildRequest |
+
+### 模拟器运行
+
+1. **创建模拟器**：Android Studio → Tools → AVD Manager → Create Virtual Device（推荐 Pixel 6 + API 34）
+2. **启动后端**：参照"本地开发"方式启动 `uvicorn main:app --reload --port 8888`
+3. **运行 App**：选择模拟器后点击 Run，App 自动连接 `10.0.2.2:8888`（宿主机后端）
+4. **验证流程**：
+   - 注册/登录 → 接收短信 → 端侧 quickRisk 预警 → 后端多模态分析 → CoT 推理结果
 
 ---
 

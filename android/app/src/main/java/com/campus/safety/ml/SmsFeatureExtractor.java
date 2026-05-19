@@ -56,6 +56,97 @@ public class SmsFeatureExtractor {
         "bit.ly", "tinyurl.com", "t.cn", "goo.gl", "ow.ly", "is.gd"
     );
 
+    // ── Features 结果类（用于端侧快速评估和 SpeculativeDecoder）──
+    public static class Features {
+        public final List<String> hitKeywords   = new ArrayList<>();
+        public final List<Integer> hitWeights   = new ArrayList<>();
+        public String ruleTriggered;
+        public boolean hasUrl;
+        public int     urlCount;
+        public float   urgencyScore;
+        public boolean moneyMentioned;
+        public boolean impersonation;
+        public int     charCount;
+        public float   riskScore;   // quickScore() 缓存
+
+        /** 快速风险评分（<5ms），与后端 RuleEngine 对齐 */
+        public int quickScore() {
+            if (riskScore > 0) return (int) riskScore;
+            int score = 0;
+            for (int w : hitWeights) score += w;
+            if (hasUrl) score += 35;
+            if (impersonation && moneyMentioned) score += 20;
+            if (urgencyScore > 0.5f) score += 15;
+            riskScore = Math.min(100, score);
+            return (int) riskScore;
+        }
+
+        public String quickRiskLevel() {
+            int s = quickScore();
+            if (ruleTriggered != null && !ruleTriggered.isEmpty()) return "high";
+            return s >= 70 ? "high" : s >= 35 ? "medium" : "safe";
+        }
+    }
+
+    /**
+     * 端侧同步特征提取（<5ms，原文立即 GC，不上传）
+     * @param content 短信原文
+     * @param sender  发件人号码
+     * @return Features 对象（含风险评分和特征向量）
+     */
+    public static Features extract(String content, String sender) {
+        if (content == null) content = "";
+        if (sender  == null) sender  = "";
+
+        Features f = new Features();
+
+        // 关键词命中
+        for (int i = 0; i < HIGH_KEYWORDS.length; i++) {
+            if (content.contains(HIGH_KEYWORDS[i])) {
+                f.hitKeywords.add(HIGH_KEYWORDS[i]);
+                f.hitWeights.add(HIGH_WEIGHTS[i]);
+            }
+        }
+        for (String kw : MED_KEYWORDS) {
+            if (content.contains(kw)) {
+                f.hitKeywords.add(kw);
+                f.hitWeights.add(40);
+            }
+        }
+
+        // 规则触发：命中多个高危关键词
+        if (f.hitKeywords.size() >= 3) {
+            f.ruleTriggered = "multiple_high_risk_keywords";
+        }
+
+        // URL
+        Matcher m = URL_PATTERN.matcher(content);
+        while (m.find()) f.urlCount++;
+        f.hasUrl = f.urlCount > 0;
+
+        // 紧迫感
+        f.urgencyScore = 0.0f;
+        String[] urgWords = {"立即", "马上", "现在", "紧急", "警告", "限时", "最后"};
+        for (String w : urgWords) if (content.contains(w)) f.urgencyScore += 0.15f;
+        f.urgencyScore += Math.min(0.3f, countChar(content, '！') * 0.1f);
+        f.urgencyScore  = Math.min(1.0f, f.urgencyScore);
+
+        // 涉钱
+        f.moneyMentioned = content.contains("万元") || content.contains("元")
+                         || content.contains("¥") || content.contains("￥")
+                         || content.contains("转账") || content.contains("汇款");
+
+        // 冒充
+        f.impersonation = content.contains("公安") || content.contains("警察")
+                        || content.contains("银行") || content.contains("客服")
+                        || content.contains("检察") || content.contains("法院");
+
+        f.charCount = content.length();
+        f.riskScore = f.quickScore();
+
+        return f;
+    }
+
     // ── 短信特征提取（12 维）─────────────────────────────
     /**
      * 从短信内容提取 12 维特征向量

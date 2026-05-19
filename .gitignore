@@ -1,0 +1,64 @@
+# ═══════════════════════════════════════════════════════════════
+# QAD-MultiGuard v4.1 — Git 忽略规则
+# ═══════════════════════════════════════════════════════════════
+
+# ── Python ───────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+*.pytest_cache/
+
+# ── Jupyter ──────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── 环境变量 ─────────────────────
+.env
+.env.local
+*.env.local
+
+# ── IDE ──────────────────────────
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+
+# ── Android ──────────────────────
+android/.gradle/
+android/build/
+android/local.properties
+*.apk
+*.aab
+*.keystore
+
+# ── ML 模型（大文件，不提交 Git）──
+*.gguf
+*.bin
+*.pkl
+*.parquet
+*.pt
+*.pth
+ml/models/
+
+# ── Docker ───────────────────────
+docker-data/
+
+# ── 数据缓存 ─────────────────────
+data/
+
+# ── 临时文件 ─────────────────────
+tmp/
+temp/
+*.tmp

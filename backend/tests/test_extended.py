@@ -320,9 +320,6 @@ async def override_get_db():
             raise exc
 
 
-app.dependency_overrides[get_db] = override_get_db
-
-
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     async with test_engine.begin() as conn:
@@ -334,8 +331,10 @@ async def setup_db():
 
 @pytest_asyncio.fixture
 async def client():
+    app.dependency_overrides[get_db] = override_get_db
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
+    app.dependency_overrides.clear()
 
 
 async def _seed_code(phone: str, code: str) -> None:
@@ -356,7 +355,7 @@ async def get_admin_token(client: AsyncClient) -> str:
     from models.user import User
     from sqlalchemy import update
     async with TestSession() as s:
-        await s.execute(update(User).values(protection_score=99))
+        await s.execute(update(User).values(role="admin", protection_score=99))
         await s.commit()
     return token
 
@@ -419,7 +418,7 @@ class TestAdminAPI:
     @pytest.mark.asyncio
     async def test_create_alert(self, client: AsyncClient):
         token = await get_admin_token(client)
-        with patch("api.v1.admin.push_pending_alerts", new_callable=AsyncMock):
+        with patch("services.scheduler.push_pending_alerts", new_callable=AsyncMock):
             r = await client.post("/v1/admin/alerts", json={
                 "title": "紧急预警测试", "content": "内容详情",
                 "risk_level": "high", "is_urgent": True

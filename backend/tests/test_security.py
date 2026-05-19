@@ -157,7 +157,9 @@ def test_feedback_path_is_absolute():
 def test_admin_update_field_whitelist():
     """验证 admin update_case 字段白名单（M5）"""
     import ast
-    with open("api/v1/admin.py", "r", encoding="utf-8") as f:
+    admin_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                              "api", "v1", "admin.py")
+    with open(admin_path, "r", encoding="utf-8") as f:
         tree = ast.parse(f.read())
     # 检查是否有 setattr 调用
     setattr_calls = []
@@ -166,7 +168,7 @@ def test_admin_update_field_whitelist():
             setattr_calls.append(node.lineno)
     assert len(setattr_calls) > 0, "未找到 setattr 调用"
     # 验证文件包含类型校验代码
-    with open("api/v1/admin.py", "r", encoding="utf-8") as f:
+    with open(admin_path, "r", encoding="utf-8") as f:
         content = f.read()
     assert "isinstance(val, str)" in content, "缺少字符串类型校验"
     assert "isinstance(val, bool)" in content, "缺少布尔类型校验"

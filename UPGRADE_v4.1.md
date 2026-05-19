@@ -87,11 +87,20 @@
 ## 验证结果
 
 ```
-39 passed / 0 failed / 39 total
+61 passed / 0 failed / 61 total  ← v4.1 修复后全量测试通过
 ✅ ALL CHECKS PASSED
 ```
 
-测试覆盖：AST 语法检查 × 6，§III.A QAD 参数 × 6，§III.B 声学嵌入 × 9，§IV 推测解码 × 7，多模态融合 × 4，Bug 修复 × 4，Android 文件 × 3。
+测试覆盖：API 集成测试 × 22（含认证/通话/短信/案例/举报/警报/推理）+ 扩展测试 × 30（内存缓存/短信服务/推送/调度器/管理后台）+ 安全回归测试 × 9（C1/H1-H6/M3/M5）。
+
+**v4.1 测试基础设施修复：**
+| # | 文件 | 问题 | 修复 |
+|---|------|------|------|
+| T1 | `core/redis.py` | `CacheService` 缺少 `get()`/`setex()` 导致 auth 模块 `AttributeError` | 新增 `CacheService.get()` 和 `CacheService.setex()` 静态方法 |
+| T2 | `api/v1/admin.py` | `require_admin()` 中 `logger` 未定义导致 `NameError` | 添加 `logger` 导入 |
+| T3 | `tests/test_api.py` | 测试直接调用 login 但 SMS 验证码未预存 → 400 错误 | 添加 `_seed_code()` 辅助函数 + 修复断言字段 `token`→`access_token` |
+| T4 | `tests/test_extended.py` | 管理后台测试使用 `protection_score` 但 v4.1 改用 `role` 字段 | `get_admin_token` 改为设置 `role="admin"` |
+| T5 | `tests/test_extended.py` | 模块级 `app.dependency_overrides` 被 test_api.py cleanup 清除 | 改为 fixture 级 override，保证测试隔离 |
 
 ---
 

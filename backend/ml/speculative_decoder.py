@@ -83,7 +83,15 @@ class FraudDraftModel:
     }
 
     def __init__(self, model_path: Optional[str] = None):
-        self.model_path = model_path or "models/fraud_draft_q4km.gguf"
+        # 优先使用传入路径，否则从 settings 读取 Docker 路径
+        if model_path is None:
+            try:
+                from core.config import settings
+                self.model_path = settings.DRAFT_MODEL_PATH
+            except (ImportError, Exception):
+                self.model_path = str(Path(__file__).resolve().parent / "models" / "fraud_draft_q4km.gguf")
+        else:
+            self.model_path = model_path
         self.arch       = STUDENT_ARCH
         self._loaded    = False
         self._load()
@@ -92,10 +100,12 @@ class FraudDraftModel:
         p = Path(self.model_path)
         if p.exists() and p.stat().st_size > 100*1024*1024:
             self._loaded = True
-            logger.info("QAD student loaded: %s", self.arch["backbone"])
+            logger.info("QAD student loaded: %s (%s)", self.arch["backbone"], self.model_path)
         else:
-            logger.info(
-                "Draft model absent, using domain-tuned prior α=%.2f", ALPHA_TUNED
+            logger.warning(
+                "Draft model not found at %s (%s), using domain-tuned prior α=%.2f",
+                self.model_path, "not found" if not p.exists() else "too small",
+                ALPHA_TUNED,
             )
 
     def draft_tokens(self, prefix: str, gamma: int = GAMMA) -> list[tuple[str, float]]:

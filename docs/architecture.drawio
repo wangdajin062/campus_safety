@@ -1,0 +1,206 @@
+<mxfile host="app.diagrams.net" modified="2026-05-17T10:00:00.000Z" agent="CampusSafety v4.1" version="24.2.5">
+  <diagram name="QAD-MultiGuard v4.1 架构" id="main">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ===== 标题 ===== -->
+        <mxCell id="title" value="QAD-MultiGuard v4.1 软硬协同多模态检测架构" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="320" y="10" width="560" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== Android 端侧区域 ===== -->
+        <mxCell id="android-box" value="📱 Android 端侧 (Java)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a73e8;fontColor=#FFFFFF;fontSize=14;fontStyle=1;strokeColor=#1557b0;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="320" height="380" as="geometry"/>
+        </mxCell>
+
+        <!-- Android 内部组件 -->
+        <mxCell id="sms-receiver" value="SmsReceiver&#10;短信广播拦截" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d3e3fd;strokeColor=#1a73e8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="100" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sms-fe" value="SmsFeatureExtractor&#10;Features.extract()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d3e3fd;strokeColor=#1a73e8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="210" y="100" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="arrow-sr-sfe" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1a73e8;" edge="1" parent="1" source="sms-receiver" target="sms-fe">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="quickrisk" value="quickScore/quickRiskLevel&#10;&lt;5ms 本地预警" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d3e3fd;strokeColor=#1a73e8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="165" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="notif" value="NotificationHelper&#10;高危立即通知" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8d7da;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="230" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="arrow-qr-notif" value="高危推送" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ea4335;fontSize=10;" edge="1" parent="1" source="quickrisk" target="notif">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="spec-dec" value="SpeculativeDecoder&#10;generateDraft γ=5&#10;detectCategory&#10;α=0.86 统计先验" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d3e3fd;strokeColor=#1a73e8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="300" width="130" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="acoustic-ext" value="AcousticEmbeddingExtractor&#10;128维 F_v 声学嵌入" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d3e3fd;strokeColor=#1a73e8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="210" y="165" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ondevice-llm" value="OnDeviceLLMEngine&#10;quickRisk 关键词评分&#10;loadModelAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d3e3fd;strokeColor=#1a73e8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="210" y="230" width="130" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mreq" value="MultimodalRequest&#10;buildRequest()&#10;12d SMS + 6d URL + 128d F_v" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0fe;strokeColor=#1a73e8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="210" y="320" width="130" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="arrow-to-mreq" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="275" y="295"/>
+            <mxPoint x="275" y="320"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===== API 层区域 ===== -->
+        <mxCell id="api-box" value="🌐 API 层 (FastAPI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#34a853;fontColor=#FFFFFF;fontSize=14;fontStyle=1;strokeColor=#2d8e47;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="440" y="70" width="280" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="endpoints" value="POST /v1/infer/fast&#10;POST /v1/infer/stream (SSE)&#10;POST /v1/infer/voice&#10;POST /v1/infer/feedback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#34a853;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="100" width="130" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="api-middleware" value="rate_limit (Redis)&#10;JWT Auth (get_current_user)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#34a853;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="100" width="100" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== 服务端区域 ===== -->
+        <mxCell id="backend-box" value="🖥️ 服务端 (Python)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ea4335;fontColor=#FFFFFF;fontSize=14;fontStyle=1;strokeColor=#c5221f;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="440" y="260" width="500" height="420" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="multimodal" value="MultimodalDetector&#10;detect_stream() SSE 流式" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4d6;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="290" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rule-engine" value="RuleEngine&#10;关键词规则匹配" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4d6;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="350" width="120" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gbm" value="GradientBoosting&#10;GBM 分类器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4d6;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="600" y="350" width="120" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="fusion" value="多模态融合&#10;L-BFGS σ(Σ w_m·r_m)&#10;w_text=0.40 w_audio=0.30&#10;w_url=0.20 w_meta=0.10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="415" width="180" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="spec-verify" value="SpeculativeDecoder&#10;verify() 服务端验证" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4d6;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="290" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="acoustic" value="AcousticExtractor&#10;voice_risk_score()&#10;4路韵律分解" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4d6;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="355" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="qad" value="QAD Pipeline&#10;L = α·L_task + β·L_KD + γ·L_quant&#10;α=0.4 β=0.5 γ=0.1 τ=3.0&#10;OV-Freeze 最后 30% epoch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4d6;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="495" width="180" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="feedback" value="record_feedback()&#10;feedback.jsonl" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4d6;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="495" width="130" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="result" value="risk_level / risk_score&#10;url_score / voice_score&#10;fused_lbfgs / confidence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ea4335;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="580" width="180" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== 数据层区域 ===== -->
+        <mxCell id="data-box" value="🗄️ 数据层" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbbc04;fontColor=#000000;fontSize=14;fontStyle=1;strokeColor=#d9a404;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="840" y="70" width="280" height="250" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="pgsql" value="PostgreSQL&#10;13张表 / 41索引 / 5触发器" style="cylinder;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#fbbc04;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="860" y="100" width="110" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="redis" value="Redis&#10;验证码缓存 / 限流&#10;Token 黑名单" style="cylinder;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#fbbc04;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="990" y="100" width="110" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="model" value="fraud_draft_q4km.gguf&#10;Qwen2.5-0.5B Q4_K_M&#10;240MB 24层 896隐藏维" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#fbbc04;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="860" y="185" width="240" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== 安全修复标注 ===== -->
+        <mxCell id="security-box" value="🔐 v4.1 安全修复（2026-05）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8d7da;fontColor=#721c24;fontSize=12;fontStyle=1;strokeColor=#f5c6cb;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="480" width="320" height="200" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="fixes" value="C1 死代码崩溃 · 删除 inference.py 300行残留\nH1 Feedback 文件竞态 · asyncio.Lock\nH2 Retrain 无限触发 · rate_limit 1/300s\nH3 无盐手机号哈希 · PBKDF2 100K迭代\nH4 Refresh Token 无轮换 · rotation+黑名单\nH5 无 Token 吊销 · Redis JTI 黑名单\nH6 DP ε 计算错误 · 正确高斯机制公式\nM1 Redis 故障不限流 · 统一 503\nM2 反代 IP 检测 · X-Forwarded-For" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontColor=#721c24;" vertex="1" parent="1">
+          <mxGeometry x="55" y="510" width="295" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== 连线 ===== -->
+
+        <!-- Android → API -->
+        <mxCell id="android-to-api" value="HTTP/JSON&#10;12d+6d+128d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="340" y="345"/>
+            <mxPoint x="440" y="135"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API → MultimodalDetector -->
+        <mxCell id="api-to-md" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="230"/>
+            <mxPoint x="525" y="290"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- MultimodalDetector → 各模块 -->
+        <mxCell id="md-to-re" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="525" y="330"/>
+            <mxPoint x="520" y="350"/>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="md-to-fusion" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="525" y="330"/>
+            <mxPoint x="550" y="415"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- QAD → Model -->
+        <mxCell id="qad-to-model" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="640" y="500"/>
+            <mxPoint x="860" y="215"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API → Redis -->
+        <mxCell id="api-to-redis" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="135"/>
+            <mxPoint x="990" y="160"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API → DB -->
+        <mxCell id="api-to-db" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="135"/>
+            <mxPoint x="915" y="160"/>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

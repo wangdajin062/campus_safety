@@ -13,8 +13,8 @@ android {
         applicationId "com.campus.safety"
         minSdk 24                     // Android 7.0+ covers 94.3% of CN market
         targetSdk 34
-        versionCode 30
-        versionName "3.0.0"
+        versionCode 41
+        versionName "4.1.0"
 
         vectorDrawables.useSupportLibrary true
 
@@ -57,6 +57,7 @@ android {
             excludes += ['META-INF/DEPENDENCIES', 'META-INF/NOTICE', 'META-INF/LICENSE']
         }
     }
+    buildToolsVersion '37.0.0'
 }
 
 dependencies {

@@ -1,0 +1,7 @@
+{
+  "theme": "default",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontFamily": "arial"
+  }
+}

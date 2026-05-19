@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     from ml.speculative_decoder import spec_decoder
     logger.info("Draft model: %s", "loaded" if spec_decoder.draft_model._loaded else "prior")
     _scheduler_task = start_scheduler()
-    logger.info("Campus Safety API v3 ready — SpecDec + QAD-4bit + Multimodal")
+    logger.info("QAD-MultiGuard v4.1 ready — SpecDec(α=0.86) + QAD-4bit + Multimodal + DP")
     yield
     if _scheduler_task: _scheduler_task.cancel()
     await close_redis()
@@ -47,9 +47,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="校园安全 API v3",
-    description="软硬协同多模态推测解码 | QAD-4bit | 毫秒级预警",
-    version="3.0.0",
+    title="校园安全 API v4.1",
+    description="QAD-MultiGuard 软硬协同多模态检测 | 推测解码 α=0.86 | 隐私保护 PIPL §23",
+    version="4.1.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -78,7 +78,7 @@ async def health():
     from ml.speculative_decoder import spec_decoder
     redis = await get_redis()
     return {
-        "status": "ok", "version": "3.0.0",
+        "status": "ok", "version": "4.1.0",
         "arch": "speculative_decoding+QAD_4bit+multimodal",
         "redis": "ok" if await redis.ping() else "degraded",
         "draft_model": "loaded" if spec_decoder.draft_model._loaded else "prior",

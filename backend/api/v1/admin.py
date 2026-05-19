@@ -19,6 +19,7 @@ from models.fraud import (
 )
 from schemas.schemas import RiskLevelEnum
 
+logger = __import__("logging").getLogger(__name__)
 router = APIRouter()
 
 
