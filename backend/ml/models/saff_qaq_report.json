@@ -1,0 +1,41 @@
+{
+  "data_source": "SafeData-QAQ pipeline",
+  "config": {
+    "samples": 200,
+    "steps": 100,
+    "alpha": 0.4,
+    "beta": 0.5,
+    "gamma": 0.1,
+    "temperature": 3.0,
+    "ov_freeze": true,
+    "ov_freeze_ratio": 0.3,
+    "bits": 4,
+    "quant_scheme": "Q4_K_M"
+  },
+  "data": {
+    "total_samples": 200,
+    "fraud_count": 114,
+    "safe_count": 86,
+    "feature_dim": 158
+  },
+  "distillation": {
+    "status": "completed",
+    "total_steps": 100,
+    "elapsed_s": 0.43,
+    "final_loss": 4.371,
+    "ov_freeze_layers": 4,
+    "ppl_recovery": 0.6,
+    "fp16_ppl": 8.43,
+    "int4_ptq_ppl": 9.42,
+    "int4_qad_ppl": 8.73,
+    "int4_ov_ppl": 8.62,
+    "model_fp16_mb": 960,
+    "model_int4_mb": 240,
+    "compression_ratio": 4.0,
+    "tokens_per_sec": 21.4,
+    "output_format": "Q4_K_M"
+  },
+  "evaluation": {
+    "status": "skipped"
+  }
+}

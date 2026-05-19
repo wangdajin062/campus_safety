@@ -34,7 +34,7 @@ from pathlib import Path
 import numpy as np
 
 # ── 将 backend 加入导入路径 ──────────────────────────────────
-BACKEND_DIR = Path(__file__).resolve().parent / "backend"
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 

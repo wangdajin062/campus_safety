@@ -28,7 +28,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 # ── 将 backend 加入导入路径 ──────────────────────────────────
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_DIR = PROJECT_ROOT / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
