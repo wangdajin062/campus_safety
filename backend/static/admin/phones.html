@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>诈骗号码库 — QAD-MultiGuard 管理看板</title>
+<link rel="stylesheet" href="/static/admin/css/admin.css">
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="icon">🛡️</span><span>QAD-MultiGuard</span></div>
+  <nav class="sidebar-nav">
+    <a href="/admin/dashboard"><span class="icon">📊</span><span>数据仪表盘</span></a>
+    <a href="/admin/reports"><span class="icon">📋</span><span>举报审核</span></a>
+    <a href="/admin/cases"><span class="icon">📖</span><span>案例管理</span></a>
+    <a href="/admin/alerts"><span class="icon">🔔</span><span>预警发布</span></a>
+    <a href="/admin/keywords"><span class="icon">🔑</span><span>关键词管理</span></a>
+    <a href="/admin/phones" class="active"><span class="icon">📞</span><span>诈骗号码库</span></a>
+  </nav>
+  <div class="sidebar-user"><span class="name">管理员</span><span class="logout" title="登出">⏻</span></div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <h1>📞 诈骗号码库</h1>
+    <div style="display:flex;gap:8px;">
+      <select id="riskFilter" class="form-control" style="width:120px;" onchange="loadPhones(1)">
+        <option value="">全部等级</option>
+        <option value="high">高危</option>
+        <option value="medium">中危</option>
+        <option value="safe">安全</option>
+      </select>
+    </div>
+  </div>
+  <div class="card">
+    <div id="phonesTable"></div>
+    <div id="pagination" class="pagination"></div>
+  </div>
+</main>
+
+<script src="/static/admin/js/admin.js"></script>
+<script>
+async function loadPhones(page = 1) {
+  await checkAuth();
+  try {
+    const risk = document.getElementById('riskFilter').value;
+    let url = V1 + '/fraud-phones?page=' + page;
+    if (risk) url += '&risk_level=' + risk;
+    const data = await apiGet(url);
+    renderPhones(data);
+  } catch (e) { showToast('加载失败: ' + e.message, 'error'); }
+}
+
+function renderPhones(data) {
+  const items = data.data || data.items || [];
+  if (!items.length) {
+    document.getElementById('phonesTable').innerHTML = '<p style="text-align:center;padding:20px;">暂无记录</p>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  const rows = items.map(p => `
+    <tr>
+      <td>${p.id}</td>
+      <td>${p.phone_number || '-'}</td>
+      <td>${riskBadge(p.risk_level)}</td>
+      <td>${p.risk_type || '-'}</td>
+      <td>${p.risk_score || 0}</td>
+      <td>${p.report_count || 0}</td>
+      <td>${p.confirmed_count || 0}</td>
+      <td>${p.is_verified ? '✅ 已验证' : '⏳ 待验证'}</td>
+      <td>${fmtTime(p.last_reported_at)}</td>
+      <td>
+        ${!p.is_verified ? `<button class="btn btn-sm btn-success" onclick="verifyPhone(${p.id})">验证</button>` : '-'}
+      </td>
+    </tr>
+  `).join('');
+  document.getElementById('phonesTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>号码</th><th>风险</th><th>类型</th><th>分数</th><th>举报</th><th>确认</th><th>验证</th><th>最近举报</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  renderPagination(document.getElementById('pagination'), data.meta || data, loadPhones);
+}
+
+async function verifyPhone(id) {
+  showModal('人工验证', '<p>确认将此号码标记为已验证？验证后风险等级将提升为高危。</p>', async () => {
+    try {
+      await apiPost(V1 + '/fraud-phones/' + id + '/verify');
+      showToast('已验证', 'success');
+      loadPhones();
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '确认验证');
+}
+
+loadPhones();
+</script>
+</body>
+</html>

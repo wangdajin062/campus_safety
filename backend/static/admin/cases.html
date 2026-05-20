@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>案例管理 — QAD-MultiGuard 管理看板</title>
+<link rel="stylesheet" href="/static/admin/css/admin.css">
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="icon">🛡️</span><span>QAD-MultiGuard</span></div>
+  <nav class="sidebar-nav">
+    <a href="/admin/dashboard"><span class="icon">📊</span><span>数据仪表盘</span></a>
+    <a href="/admin/reports"><span class="icon">📋</span><span>举报审核</span></a>
+    <a href="/admin/cases" class="active"><span class="icon">📖</span><span>案例管理</span></a>
+    <a href="/admin/alerts"><span class="icon">🔔</span><span>预警发布</span></a>
+    <a href="/admin/keywords"><span class="icon">🔑</span><span>关键词管理</span></a>
+    <a href="/admin/phones"><span class="icon">📞</span><span>诈骗号码库</span></a>
+  </nav>
+  <div class="sidebar-user"><span class="name">管理员</span><span class="logout" title="登出">⏻</span></div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <h1>📖 案例管理</h1>
+    <button class="btn btn-primary" onclick="showCreateForm()">+ 新建案例</button>
+  </div>
+  <div class="card">
+    <div id="casesTable"></div>
+    <div id="pagination" class="pagination"></div>
+  </div>
+</main>
+
+<script src="/static/admin/js/admin.js"></script>
+<script>
+async function loadCases(page = 1) {
+  await checkAuth();
+  try {
+    const data = await apiGet(V1 + '/cases?page=' + page);
+    renderCases(data);
+  } catch (e) { showToast('加载失败: ' + e.message, 'error'); }
+}
+
+function renderCases(data) {
+  const items = data.data || data.items || [];
+  if (!items.length) {
+    document.getElementById('casesTable').innerHTML = '<p style="text-align:center;padding:20px;">暂无案例，点击右上角新建</p>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  const rows = items.map(c => `
+    <tr>
+      <td>${c.id}</td>
+      <td>${c.emoji || ''} ${c.title}</td>
+      <td>${c.category || '-'}</td>
+      <td>${riskBadge(c.risk_level)}</td>
+      <td>${c.view_count || 0}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${fmtTime(c.published_at)}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="editCase(${c.id}, '${c.title.replace(/'/g, "\\'")}', '${(c.summary||'').replace(/'/g, "\\'")}', '${(c.content||'').replace(/'/g, "\\'")}', '${c.category}', '${c.risk_level}')">编辑</button>
+        ${c.status !== 'archived' ? `<button class="btn btn-sm btn-danger" onclick="archiveCase(${c.id})">下架</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+  document.getElementById('casesTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>风险</th><th>阅读</th><th>状态</th><th>发布时间</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  renderPagination(document.getElementById('pagination'), data.meta || data, loadCases);
+}
+
+function showCreateForm() {
+  showModal('新建案例', `
+    <div class="form-group"><label>标题</label><input id="title" class="form-control" required></div>
+    <div class="form-group"><label>摘要</label><input id="summary" class="form-control"></div>
+    <div class="form-group"><label>正文 (Markdown)</label><textarea id="content" class="form-control"></textarea></div>
+    <div class="grid-2">
+      <div class="form-group"><label>分类</label>
+        <select id="category" class="form-control">
+          <option value="电信诈骗">电信诈骗</option><option value="网络诈骗">网络诈骗</option>
+          <option value="校园贷">校园贷</option><option value="兼职陷阱">兼职陷阱</option>
+          <option value="冒充身份">冒充身份</option>
+        </select>
+      </div>
+      <div class="form-group"><label>风险等级</label>
+        <select id="risk_level" class="form-control">
+          <option value="medium">中危</option><option value="high">高危</option><option value="safe">安全</option>
+        </select>
+      </div>
+    </div>
+  `, async (overlay) => {
+    const body = {
+      title: overlay.querySelector('#title').value,
+      summary: overlay.querySelector('#summary').value,
+      content: overlay.querySelector('#content').value,
+      category: overlay.querySelector('#category').value,
+      risk_level: overlay.querySelector('#risk_level').value,
+    };
+    if (!body.title) { showToast('请输入标题', 'error'); return; }
+    try {
+      await apiPost(V1 + '/cases', body);
+      showToast('案例创建成功', 'success');
+      loadCases();
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '创建');
+}
+
+function editCase(id, title, summary, content, category, risk_level) {
+  showModal('编辑案例 #' + id, `
+    <div class="form-group"><label>标题</label><input id="title" class="form-control" value="${title}"></div>
+    <div class="form-group"><label>摘要</label><input id="summary" class="form-control" value="${summary}"></div>
+    <div class="form-group"><label>正文</label><textarea id="content" class="form-control">${content}</textarea></div>
+    <div class="grid-2">
+      <div class="form-group"><label>分类</label>
+        <select id="category" class="form-control">
+          <option value="电信诈骗" ${category==='电信诈骗'?'selected':''}>电信诈骗</option>
+          <option value="网络诈骗" ${category==='网络诈骗'?'selected':''}>网络诈骗</option>
+          <option value="校园贷" ${category==='校园贷'?'selected':''}>校园贷</option>
+          <option value="兼职陷阱" ${category==='兼职陷阱'?'selected':''}>兼职陷阱</option>
+          <option value="冒充身份" ${category==='冒充身份'?'selected':''}>冒充身份</option>
+        </select>
+      </div>
+      <div class="form-group"><label>风险等级</label>
+        <select id="risk_level" class="form-control">
+          <option value="medium" ${risk_level==='medium'?'selected':''}>中危</option>
+          <option value="high" ${risk_level==='high'?'selected':''}>高危</option>
+          <option value="safe" ${risk_level==='safe'?'selected':''}>安全</option>
+        </select>
+      </div>
+    </div>
+  `, async (overlay) => {
+    const body = {
+      title: overlay.querySelector('#title').value,
+      summary: overlay.querySelector('#summary').value,
+      content: overlay.querySelector('#content').value,
+      category: overlay.querySelector('#category').value,
+      risk_level: overlay.querySelector('#risk_level').value,
+    };
+    try {
+      await apiPut(V1 + '/cases/' + id, body);
+      showToast('更新成功', 'success');
+      loadCases();
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '保存');
+}
+
+async function archiveCase(id) {
+  showModal('下架案例', '<p>确认下架案例 #' + id + '？下架后用户不可见，但数据保留。</p>', async () => {
+    try {
+      await apiDelete(V1 + '/cases/' + id);
+      showToast('已下架', 'info');
+      loadCases();
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '确认下架');
+}
+
+loadCases();
+</script>
+</body>
+</html>

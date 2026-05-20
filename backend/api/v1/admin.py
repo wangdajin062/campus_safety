@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from core.database import get_db
-from core.security import get_current_user
+from core.security import get_admin_from_cookie
 from models.user import User
 from models.fraud import (
     UserReport, FraudPhone, FraudCase, FraudAlert,
@@ -24,23 +24,9 @@ router = APIRouter()
 
 
 # ── 管理员鉴权 ────────────────────────────────────────────
-async def require_admin(current_user: User = Depends(get_current_user)) -> User:
-    """
-    ✅ v4.1 修复：只使用数据库 role 字段，不再用 protection_score
-    
-    users 表中 role 字段：
-      - 'user': 普通用户
-      - 'admin': 管理员
-    """
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=403, 
-            detail="需要管理员权限"
-        )
-    
-    # 可选：添加审计日志
+async def require_admin(current_user: User = Depends(get_admin_from_cookie)) -> User:
+    """管理员鉴权：支持 Cookie (httpOnly) 和 Bearer header 双重认证"""
     logger.info(f"Admin access by user_id={current_user.id}")
-    
     return current_user
 
 
@@ -190,6 +176,30 @@ async def reject_report(
 
 
 # ── 案例管理 ─────────────────────────────────────────────
+@router.get("/cases", summary="管理端案例列表")
+async def admin_list_cases(
+    page: int = Query(1, ge=1),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    limit = 15
+    offset = (page - 1) * limit
+    q = select(FraudCase).where(FraudCase.status.in_(["published", "draft"])).order_by(desc(FraudCase.published_at))
+    result = await db.execute(q.limit(limit).offset(offset))
+    rows = result.scalars().all()
+    total = (await db.execute(select(func.count()).select_from(FraudCase).where(FraudCase.status.in_(["published", "draft"])))).scalar()
+    return {
+        "code": 200,
+        "data": [
+            {"id": r.id, "title": r.title, "summary": r.summary, "content": r.content,
+             "category": r.category, "risk_level": r.risk_level, "emoji": r.emoji,
+             "view_count": r.view_count, "status": r.status, "published_at": r.published_at.isoformat() if r.published_at else None}
+            for r in rows
+        ],
+        "meta": {"total": total, "page": page, "limit": limit},
+    }
+
+
 @router.post("/cases", summary="新建诈骗案例")
 async def create_case(
     body: dict,
@@ -259,6 +269,30 @@ async def archive_case(
 
 
 # ── 预警管理 ─────────────────────────────────────────────
+@router.get("/alerts", summary="管理端预警列表")
+async def admin_list_alerts(
+    page: int = Query(1, ge=1),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    limit = 15
+    offset = (page - 1) * limit
+    q = select(FraudAlert).order_by(desc(FraudAlert.published_at))
+    result = await db.execute(q.limit(limit).offset(offset))
+    rows = result.scalars().all()
+    total = (await db.execute(select(func.count()).select_from(FraudAlert))).scalar()
+    return {
+        "code": 200,
+        "data": [
+            {"id": r.id, "title": r.title, "emoji": r.emoji, "risk_level": r.risk_level,
+             "is_urgent": r.is_urgent, "push_count": r.push_count, "read_count": r.read_count,
+             "tags": r.tags or [], "published_at": r.published_at.isoformat() if r.published_at else None}
+            for r in rows
+        ],
+        "meta": {"total": total, "page": page, "limit": limit},
+    }
+
+
 @router.post("/alerts", summary="发布电诈预警")
 async def create_alert(
     body: dict,

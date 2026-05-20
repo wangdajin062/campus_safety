@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>预警管理 — QAD-MultiGuard 管理看板</title>
+<link rel="stylesheet" href="/static/admin/css/admin.css">
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="icon">🛡️</span><span>QAD-MultiGuard</span></div>
+  <nav class="sidebar-nav">
+    <a href="/admin/dashboard"><span class="icon">📊</span><span>数据仪表盘</span></a>
+    <a href="/admin/reports"><span class="icon">📋</span><span>举报审核</span></a>
+    <a href="/admin/cases"><span class="icon">📖</span><span>案例管理</span></a>
+    <a href="/admin/alerts" class="active"><span class="icon">🔔</span><span>预警发布</span></a>
+    <a href="/admin/keywords"><span class="icon">🔑</span><span>关键词管理</span></a>
+    <a href="/admin/phones"><span class="icon">📞</span><span>诈骗号码库</span></a>
+  </nav>
+  <div class="sidebar-user"><span class="name">管理员</span><span class="logout" title="登出">⏻</span></div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <h1>🔔 预警管理</h1>
+    <button class="btn btn-primary" onclick="showCreateAlert()">+ 发布预警</button>
+  </div>
+  <div class="card">
+    <div id="alertsTable"></div>
+    <div id="pagination" class="pagination"></div>
+  </div>
+</main>
+
+<script src="/static/admin/js/admin.js"></script>
+<script>
+async function loadAlerts(page = 1) {
+  await checkAuth();
+  try {
+    const data = await apiGet(V1 + '/alerts?page=' + page);
+    renderAlerts(data);
+  } catch (e) { showToast('加载失败: ' + e.message, 'error'); }
+}
+
+function renderAlerts(data) {
+  const items = data.data || data.items || [];
+  if (!items.length) {
+    document.getElementById('alertsTable').innerHTML = '<p style="text-align:center;padding:20px;">暂无预警</p>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  const rows = items.map(a => `
+    <tr>
+      <td>${a.id}</td>
+      <td>${a.emoji || ''} ${a.title}</td>
+      <td>${riskBadge(a.risk_level)}</td>
+      <td>${a.is_urgent ? '🔴 紧急' : '🟢 常规'}</td>
+      <td>${a.push_count || 0} / ${a.read_count || 0}</td>
+      <td>${(a.tags || []).join(', ') || '-'}</td>
+      <td>${fmtTime(a.published_at)}</td>
+    </tr>
+  `).join('');
+  document.getElementById('alertsTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>标题</th><th>风险</th><th>紧急度</th><th>推送/阅读</th><th>标签</th><th>发布时间</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  renderPagination(document.getElementById('pagination'), data.meta || data, loadAlerts);
+}
+
+function showCreateAlert() {
+  showModal('发布预警', `
+    <div class="form-group"><label>标题</label><input id="title" class="form-control" required></div>
+    <div class="form-group"><label>正文</label><textarea id="content" class="form-control"></textarea></div>
+    <div class="grid-2">
+      <div class="form-group"><label>风险等级</label>
+        <select id="risk_level" class="form-control">
+          <option value="medium">中危</option><option value="high">高危</option><option value="safe">安全</option>
+        </select>
+      </div>
+      <div class="form-group"><label>紧急标记</label>
+        <select id="is_urgent" class="form-control">
+          <option value="false">常规</option><option value="true">紧急</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>目标学校（逗号分割，留空=全部）</label>
+      <input id="target_schools" class="form-control" placeholder="清华大学, 北京大学">
+    </div>
+  `, async (overlay) => {
+    const schools = overlay.querySelector('#target_schools').value;
+    const body = {
+      title: overlay.querySelector('#title').value,
+      content: overlay.querySelector('#content').value,
+      risk_level: overlay.querySelector('#risk_level').value,
+      is_urgent: overlay.querySelector('#is_urgent').value === 'true',
+    };
+    if (schools) body.target_schools = schools.split(',').map(s => s.trim()).filter(Boolean);
+    if (!body.title) { showToast('请输入标题', 'error'); return; }
+    try {
+      await apiPost(V1 + '/alerts', body);
+      showToast('预警发布成功，正在推送...', 'success');
+      loadAlerts();
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '发布');
+}
+
+loadAlerts();
+</script>
+</body>
+</html>

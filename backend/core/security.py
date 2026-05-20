@@ -4,6 +4,7 @@ core/security.py - JWT 鉴权 & 密码工具 (v4.1 安全修复)
   ✓ H3: PBKDF2 手机号哈希（替代无盐 SHA256）
   ✓ H4: Refresh token rotation（每次刷新签发新 refresh_token）
   ✓ H5: Redis Token 黑名单（支持吊销和登出失效）
+  ✓ H6: Cookie Session 支持（管理看板 httpOnly Cookie 认证）
 """
 
 from datetime import datetime, timedelta, timezone
@@ -11,7 +12,7 @@ from typing import Optional
 import hashlib
 import secrets
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +23,10 @@ from core.database import get_db
 from core.redis import get_redis
 from models.user import User
 
-bearer_scheme = HTTPBearer()
+bearer_scheme = HTTPBearer(auto_error=False)
+
+COOKIE_NAME = "admin_token"
+COOKIE_MAX_AGE = 86400  # 24 hours
 
 
 def sha256(value: str) -> str:
@@ -163,10 +167,12 @@ def decode_token(token: str, token_type: str = "access") -> dict:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
     """从 access_token 获取当前用户（检查黑名单）"""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="未提供认证 Token")
     token = credentials.credentials
 
     # H5: 检查 Token 黑名单
@@ -177,6 +183,96 @@ async def get_current_user(
     uid = payload.get("uid")
     if not uid:
         raise HTTPException(status_code=401, detail="Token 解析失败")
+    result = await db.execute(select(User).where(User.id == uid, User.status == 1))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=401, detail="用户不存在或已被禁用")
+    return user
+
+
+# ── Cookie Session 支持（管理看板 Web 认证）─────────────────
+
+def set_auth_cookie(response: Response, token: str) -> None:
+    """将 JWT token 设置到 httpOnly Cookie"""
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=token,
+        max_age=COOKIE_MAX_AGE,
+        httponly=True,
+        secure=False,  # 开发环境用 HTTP，生产应设为 True
+        samesite="lax",
+        path="/",
+    )
+
+
+def clear_auth_cookie(response: Response) -> None:
+    """清除认证 Cookie"""
+    response.delete_cookie(key=COOKIE_NAME, path="/")
+
+
+async def get_admin_from_cookie(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    从 httpOnly Cookie 读取 admin token，验证并返回管理员用户。
+    同时支持 Authorization Bearer header 作为 fallback。
+    """
+    token = request.cookies.get(COOKIE_NAME)
+
+    # Fallback: 也支持 Bearer header
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+
+    if not token:
+        raise HTTPException(status_code=401, detail="未登录，请先访问管理登录页面")
+
+    if await is_token_blacklisted(token):
+        raise HTTPException(status_code=401, detail="Token 已被吊销，请重新登录")
+
+    payload = decode_token(token, token_type="access")
+    uid = payload.get("uid")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Token 无效")
+
+    result = await db.execute(select(User).where(User.id == uid, User.status == 1))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=401, detail="用户不存在或已被禁用")
+
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="需要管理员权限")
+
+    return user
+
+
+async def get_current_user_web(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    Web 页面通用认证：优先从 Cookie 读取，fallback 到 Bearer header。
+    不要求 admin 角色（用于普通用户 Web 页面）。
+    """
+    token = request.cookies.get(COOKIE_NAME)
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+
+    if not token:
+        raise HTTPException(status_code=401, detail="未登录")
+
+    if await is_token_blacklisted(token):
+        raise HTTPException(status_code=401, detail="Token 已被吊销")
+
+    payload = decode_token(token, token_type="access")
+    uid = payload.get("uid")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Token 无效")
+
     result = await db.execute(select(User).where(User.id == uid, User.status == 1))
     user = result.scalar_one_or_none()
     if not user:

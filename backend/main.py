@@ -6,14 +6,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 
 from core.config import settings
 from core.database import engine, Base
 from core.redis import get_redis, close_redis
 from api.v1 import auth, calls, sms, cases, alerts, reports, users, admin
-from api.v1 import inference
+from api.v1 import inference, admin_web
 from services.scheduler import start_scheduler
 
 logging.basicConfig(level=logging.INFO,
@@ -71,6 +73,14 @@ app.include_router(reports.router,   prefix="/v1/reports",tags=["举报"])
 app.include_router(users.router,     prefix="/v1/user",   tags=["用户"])
 app.include_router(admin.router,     prefix="/v1/admin",  tags=["管理"])
 app.include_router(inference.router, prefix="/v1/infer",  tags=["推理引擎"])
+app.include_router(admin_web.router,  prefix="/admin",      tags=["管理看板"])
+
+# ── 静态文件服务 ──────────────────────────────────────────
+_static_dir = Path(__file__).parent / "static"
+_static_dir.mkdir(parents=True, exist_ok=True)
+(_static_dir / "admin" / "css").mkdir(parents=True, exist_ok=True)
+(_static_dir / "admin" / "js").mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
 
 @app.get("/health")

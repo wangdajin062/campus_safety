@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关键词管理 — QAD-MultiGuard 管理看板</title>
+<link rel="stylesheet" href="/static/admin/css/admin.css">
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="icon">🛡️</span><span>QAD-MultiGuard</span></div>
+  <nav class="sidebar-nav">
+    <a href="/admin/dashboard"><span class="icon">📊</span><span>数据仪表盘</span></a>
+    <a href="/admin/reports"><span class="icon">📋</span><span>举报审核</span></a>
+    <a href="/admin/cases"><span class="icon">📖</span><span>案例管理</span></a>
+    <a href="/admin/alerts"><span class="icon">🔔</span><span>预警发布</span></a>
+    <a href="/admin/keywords" class="active"><span class="icon">🔑</span><span>关键词管理</span></a>
+    <a href="/admin/phones"><span class="icon">📞</span><span>诈骗号码库</span></a>
+  </nav>
+  <div class="sidebar-user"><span class="name">管理员</span><span class="logout" title="登出">⏻</span></div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <h1>🔑 关键词管理</h1>
+    <button class="btn btn-primary" onclick="showAddKeyword()">+ 添加关键词</button>
+  </div>
+  <div class="card">
+    <div id="keywordsTable"></div>
+  </div>
+</main>
+
+<script src="/static/admin/js/admin.js"></script>
+<script>
+async function loadKeywords() {
+  await checkAuth();
+  try {
+    const data = await apiGet(V1 + '/keywords');
+    renderKeywords(data.data || data.items || data || []);
+  } catch (e) { showToast('加载失败: ' + e.message, 'error'); }
+}
+
+function renderKeywords(items) {
+  const arr = Array.isArray(items) ? items : (items.data || items.items || []);
+  if (!arr.length) {
+    document.getElementById('keywordsTable').innerHTML = '<p style="text-align:center;padding:20px;">暂无关键词</p>';
+    return;
+  }
+  const rows = arr.map(k => `
+    <tr>
+      <td>${k.id}</td>
+      <td><code style="background:#f1f3f4;padding:2px 8px;border-radius:4px;">${k.keyword}</code></td>
+      <td>${k.risk_weight || 0}</td>
+      <td>${k.category || '-'}</td>
+      <td>${k.hit_count || 0}</td>
+      <td>${k.is_active ? '<span class="badge badge-approved">启用</span>' : '<span class="badge badge-rejected">停用</span>'}</td>
+      <td>${fmtTime(k.created_at)}</td>
+      <td>
+        ${k.is_active ? `<button class="btn btn-sm btn-danger" onclick="deactivateKeyword(${k.id}, '${k.keyword}')">停用</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+  document.getElementById('keywordsTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>关键词</th><th>风险权重</th><th>分类</th><th>命中次数</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function showAddKeyword() {
+  showModal('添加关键词', `
+    <div class="form-group"><label>关键词</label><input id="keyword" class="form-control" required maxlength="100"></div>
+    <div class="grid-2">
+      <div class="form-group"><label>风险权重 (1-100)</label>
+        <input id="risk_weight" class="form-control" type="number" min="1" max="100" value="50">
+      </div>
+      <div class="form-group"><label>分类</label>
+        <select id="category" class="form-control">
+          <option value="电信诈骗">电信诈骗</option><option value="网络诈骗">网络诈骗</option>
+          <option value="校园贷">校园贷</option><option value="兼职陷阱">兼职陷阱</option>
+          <option value="冒充身份">冒充身份</option>
+        </select>
+      </div>
+    </div>
+  `, async (overlay) => {
+    const body = {
+      keyword: overlay.querySelector('#keyword').value,
+      risk_weight: parseInt(overlay.querySelector('#risk_weight').value) || 50,
+      category: overlay.querySelector('#category').value,
+    };
+    if (!body.keyword) { showToast('请输入关键词', 'error'); return; }
+    try {
+      await apiPost(V1 + '/keywords', body);
+      showToast('关键词添加成功', 'success');
+      loadKeywords();
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '添加');
+}
+
+async function deactivateKeyword(id, keyword) {
+  showModal('停用关键词', '<p>确认停用关键词「<b>' + keyword + '</b>」？</p>', async () => {
+    try {
+      await apiDelete(V1 + '/keywords/' + id);
+      showToast('已停用', 'info');
+      loadKeywords();
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '确认停用');
+}
+
+loadKeywords();
+</script>
+</body>
+</html>

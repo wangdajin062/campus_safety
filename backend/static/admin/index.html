@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据仪表盘 — QAD-MultiGuard 管理看板</title>
+<link rel="stylesheet" href="/static/admin/css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="icon">🛡️</span><span>QAD-MultiGuard</span></div>
+  <nav class="sidebar-nav">
+    <a href="/admin/dashboard" class="active"><span class="icon">📊</span><span>数据仪表盘</span></a>
+    <a href="/admin/reports"><span class="icon">📋</span><span>举报审核</span></a>
+    <a href="/admin/cases"><span class="icon">📖</span><span>案例管理</span></a>
+    <a href="/admin/alerts"><span class="icon">🔔</span><span>预警发布</span></a>
+    <a href="/admin/keywords"><span class="icon">🔑</span><span>关键词管理</span></a>
+    <a href="/admin/phones"><span class="icon">📞</span><span>诈骗号码库</span></a>
+  </nav>
+  <div class="sidebar-user">
+    <span class="name">管理员</span>
+    <span class="logout" title="登出">⏻</span>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="page-header">
+    <h1>📊 数据仪表盘</h1>
+    <span style="color:var(--text-secondary);font-size:13px;">QAD-MultiGuard v4.1</span>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stat-grid" id="statCards"></div>
+
+  <!-- Charts -->
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-bottom:16px;">风险等级分布</h3>
+      <div class="chart-container"><canvas id="riskPieChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:16px;">举报趋势（近7天）</h3>
+      <div class="chart-container"><canvas id="trendBarChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top Fraud Phones -->
+  <div class="card" style="margin-top:20px;">
+    <h3 style="margin-bottom:16px;">🚨 高风险电话 Top 5</h3>
+    <div id="topPhonesTable"></div>
+  </div>
+</main>
+
+<script src="/static/admin/js/admin.js"></script>
+<script>
+let riskChart, trendChart;
+
+async function loadDashboard() {
+  await checkAuth();
+  try {
+    const data = await apiGet(V1 + '/dashboard');
+    renderStats(data);
+    renderTopPhones(data.top_risky_phones || []);
+    renderCharts(data);
+  } catch (e) {
+    showToast('加载仪表盘失败: ' + e.message, 'error');
+  }
+}
+
+function renderStats(d) {
+  const stats = [
+    { label: '总用户数', value: d.total_users || 0, icon: '👥', cls: 'blue' },
+    { label: '诈骗号码', value: d.total_fraud_phones || 0, icon: '📞', cls: 'red' },
+    { label: '案例总数', value: d.total_cases || 0, icon: '📖', cls: 'green' },
+    { label: '待审核举报', value: d.pending_reports || 0, icon: '📋', cls: 'orange' },
+  ];
+  document.getElementById('statCards').innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-icon ${s.cls}">${s.icon}</div>
+      <div class="stat-info">
+        <div class="stat-value">${s.value.toLocaleString()}</div>
+        <div class="stat-label">${s.label}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTopPhones(phones) {
+  if (!phones.length) {
+    document.getElementById('topPhonesTable').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">暂无数据</p>';
+    return;
+  }
+  const rows = phones.map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${p.phone_number || '-'}</td>
+      <td>${riskBadge(p.risk_level)}</td>
+      <td>${p.risk_score || 0}</td>
+      <td>${p.report_count || 0}</td>
+      <td>${p.is_verified ? '✅ 已验证' : '待验证'}</td>
+    </tr>
+  `).join('');
+  document.getElementById('topPhonesTable').innerHTML = `
+    <table>
+      <thead><tr><th>#</th><th>号码</th><th>风险等级</th><th>风险分</th><th>举报次数</th><th>状态</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderCharts(d) {
+  // Pie chart - risk distribution (using available data)
+  const highCount = d.top_risky_phones ? d.top_risky_phones.filter(p => p.risk_level === 'high').length : 0;
+  const medCount = d.top_risky_phones ? d.top_risky_phones.filter(p => p.risk_level === 'medium').length : 0;
+  const safeCount = Math.max(0, (d.total_fraud_phones || 0) - highCount - medCount);
+
+  if (riskChart) riskChart.destroy();
+  const pieCtx = document.getElementById('riskPieChart').getContext('2d');
+  riskChart = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['高危', '中危', '低危/安全'],
+      datasets: [{
+        data: [highCount || 1, medCount || 1, safeCount || 1],
+        backgroundColor: ['#d93025', '#f9ab00', '#188038'],
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Bar chart - monthly trend placeholder
+  if (trendChart) trendChart.destroy();
+  const barCtx = document.getElementById('trendBarChart').getContext('2d');
+  const days = ['周一','周二','周三','周四','周五','周六','周日'];
+  trendChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [{
+        label: '新增举报',
+        data: [d.new_reports_this_month || 0, 0, 0, 0, 0, 0, 0],
+        backgroundColor: '#1a73e8',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

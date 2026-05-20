@@ -20,8 +20,15 @@ class Settings(BaseSettings):
     JWT_EXPIRE_DAYS: int = Field(default=1, ge=1, le=7, description="access_token 过期时间（推荐 1-7 天）")
     JWT_REFRESH_EXPIRE_DAYS: int = Field(default=7, ge=1, le=30, description="refresh_token 过期时间")
 
-    # 数据库 PostgreSQL
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/campus_safety"
+    # 数据库类型: "sqlite" (开发) / "postgresql" (生产)
+    DATABASE_TYPE: str = "sqlite"
+
+    # 数据库连接 URL（根据 DATABASE_TYPE 自动选择）
+    @property
+    def DATABASE_URL(self) -> str:
+        if self.DATABASE_TYPE == "sqlite":
+            return "sqlite+aiosqlite:///campus_safety.db"
+        return "postgresql+asyncpg://postgres:password@localhost:5432/campus_safety"
 
     # Redis（验证码缓存 & 限流）
     REDIS_URL: str = "redis://localhost:6379/0"

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>举报审核 — QAD-MultiGuard 管理看板</title>
+<link rel="stylesheet" href="/static/admin/css/admin.css">
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="icon">🛡️</span><span>QAD-MultiGuard</span></div>
+  <nav class="sidebar-nav">
+    <a href="/admin/dashboard"><span class="icon">📊</span><span>数据仪表盘</span></a>
+    <a href="/admin/reports" class="active"><span class="icon">📋</span><span>举报审核</span></a>
+    <a href="/admin/cases"><span class="icon">📖</span><span>案例管理</span></a>
+    <a href="/admin/alerts"><span class="icon">🔔</span><span>预警发布</span></a>
+    <a href="/admin/keywords"><span class="icon">🔑</span><span>关键词管理</span></a>
+    <a href="/admin/phones"><span class="icon">📞</span><span>诈骗号码库</span></a>
+  </nav>
+  <div class="sidebar-user"><span class="name">管理员</span><span class="logout" title="登出">⏻</span></div>
+</aside>
+
+<main class="main">
+  <div class="page-header"><h1>📋 举报审核</h1></div>
+  <div class="tabs">
+    <div class="tab active" data-status="pending">待审核</div>
+    <div class="tab" data-status="approved">已通过</div>
+    <div class="tab" data-status="rejected">已拒绝</div>
+    <div class="tab" data-status="all">全部</div>
+  </div>
+  <div class="card">
+    <div id="reportsTable"></div>
+    <div id="pagination" class="pagination"></div>
+  </div>
+</main>
+
+<script src="/static/admin/js/admin.js"></script>
+<script>
+let currentStatus = 'pending';
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentStatus = tab.dataset.status;
+    loadReports(1);
+  });
+});
+
+async function loadReports(page = 1) {
+  await checkAuth();
+  try {
+    let url = V1 + '/reports?page=' + page;
+    if (currentStatus !== 'all') url += '&status=' + currentStatus;
+    const data = await apiGet(url);
+    renderReports(data);
+  } catch (e) {
+    showToast('加载失败: ' + e.message, 'error');
+  }
+}
+
+function renderReports(data) {
+  const items = data.data || data.items || [];
+  if (!items.length) {
+    document.getElementById('reportsTable').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">暂无数据</p>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  const rows = items.map(r => `
+    <tr>
+      <td>${r.id}</td>
+      <td>${statusBadge(r.report_type)}</td>
+      <td title="${r.target || ''}">${(r.target || '').substring(0, 30)}</td>
+      <td>${(r.description || '').substring(0, 40)}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td>${fmtTime(r.created_at)}</td>
+      <td>
+        ${r.status === 'pending' ? `
+          <button class="btn btn-sm btn-success" onclick="approveReport(${r.id})">通过</button>
+          <button class="btn btn-sm btn-outline" onclick="rejectReport(${r.id})">拒绝</button>
+        ` : r.review_note || '-'}
+      </td>
+    </tr>
+  `).join('');
+  document.getElementById('reportsTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>类型</th><th>目标</th><th>描述</th><th>状态</th><th>提交时间</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  renderPagination(document.getElementById('pagination'), data.meta || data, loadReports);
+}
+
+async function approveReport(id) {
+  showModal('审核通过', `
+    <div class="form-group"><label>风险类型</label>
+      <select id="riskType" class="form-control">
+        <option value="电信诈骗">电信诈骗</option><option value="骚扰电话">骚扰电话</option>
+        <option value="钓鱼链接">钓鱼链接</option><option value="恶意短信">恶意短信</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div class="form-group"><label>审核备注</label>
+      <input id="note" class="form-control" placeholder="可选">
+    </div>
+  `, async (overlay) => {
+    const riskType = overlay.querySelector('#riskType').value;
+    const note = overlay.querySelector('#note').value;
+    try {
+      await apiPost(V1 + '/reports/' + id + '/approve', { note, risk_type: riskType });
+      showToast('已通过', 'success');
+      loadReports(1);
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '确认通过');
+}
+
+async function rejectReport(id) {
+  showModal('拒绝举报', `
+    <div class="form-group"><label>拒绝原因</label>
+      <input id="note" class="form-control" placeholder="可选">
+    </div>
+  `, async (overlay) => {
+    try {
+      await apiPost(V1 + '/reports/' + id + '/reject', { note: overlay.querySelector('#note').value });
+      showToast('已拒绝', 'info');
+      loadReports(1);
+    } catch (e) { showToast(e.message, 'error'); }
+  }, '确认拒绝');
+}
+
+loadReports();
+</script>
+</body>
+</html>
