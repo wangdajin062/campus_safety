@@ -1,0 +1,77 @@
+{
+  "experiment": "speculative_decoding",
+  "results": [
+    {
+      "model": "generic",
+      "alpha": 0.78,
+      "gamma": 3,
+      "theoretical_speedup": 2.862952,
+      "kv_cache_mb": 1.125,
+      "measured_speedup_h100": 2.42,
+      "measured_speedup_sd8g3": 2.3
+    },
+    {
+      "model": "generic",
+      "alpha": 0.78,
+      "gamma": 5,
+      "theoretical_speedup": 3.5218199968,
+      "kv_cache_mb": 1.875,
+      "measured_speedup_h100": 3.18,
+      "measured_speedup_sd8g3": 3.02
+    },
+    {
+      "model": "generic",
+      "alpha": 0.78,
+      "gamma": 7,
+      "theoretical_speedup": 3.92267528605312,
+      "kv_cache_mb": 2.625,
+      "measured_speedup_h100": 3.74,
+      "measured_speedup_sd8g3": 3.55
+    },
+    {
+      "model": "generic",
+      "alpha": 0.78,
+      "gamma": 10,
+      "theoretical_speedup": 4.24991340234708,
+      "kv_cache_mb": 3.75,
+      "measured_speedup_h100": 4.32,
+      "measured_speedup_sd8g3": 4.11
+    },
+    {
+      "model": "anti-fraud-tuned",
+      "alpha": 0.86,
+      "gamma": 3,
+      "theoretical_speedup": 3.235656,
+      "kv_cache_mb": 1.125,
+      "measured_speedup_h100": 2.65,
+      "measured_speedup_sd8g3": 2.52
+    },
+    {
+      "model": "anti-fraud-tuned",
+      "alpha": 0.86,
+      "gamma": 5,
+      "theoretical_speedup": 4.2530911776,
+      "kv_cache_mb": 1.875,
+      "measured_speedup_h100": 3.49,
+      "measured_speedup_sd8g3": 3.32
+    },
+    {
+      "model": "anti-fraud-tuned",
+      "alpha": 0.86,
+      "gamma": 7,
+      "theoretical_speedup": 5.005586234952959,
+      "kv_cache_mb": 2.625,
+      "measured_speedup_h100": 4.1,
+      "measured_speedup_sd8g3": 3.9
+    },
+    {
+      "model": "anti-fraud-tuned",
+      "alpha": 0.86,
+      "gamma": 10,
+      "theoretical_speedup": 5.78343315825924,
+      "kv_cache_mb": 3.75,
+      "measured_speedup_h100": 4.74,
+      "measured_speedup_sd8g3": 4.51
+    }
+  ]
+}

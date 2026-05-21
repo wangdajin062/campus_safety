@@ -1,0 +1,140 @@
+{
+  "experiment": "loss_ablation",
+  "results": [
+    {
+      "student": "close",
+      "loss": "pure_kl",
+      "loss_value": 0.2998884618282318,
+      "kl_div_to_teacher": 0.2998884618282318,
+      "f1": 0.916,
+      "kl": 0.007,
+      "std": 0.005
+    },
+    {
+      "student": "close",
+      "loss": "mse",
+      "loss_value": 0.010048022493720055,
+      "kl_div_to_teacher": 0.2998884618282318,
+      "f1": 0.901,
+      "kl": 0.082,
+      "std": 0.01
+    },
+    {
+      "student": "close",
+      "loss": "cross_entropy",
+      "loss_value": 1.9321731328964233,
+      "kl_div_to_teacher": 0.2998884618282318,
+      "f1": 0.844,
+      "kl": 0.311,
+      "std": 0.014
+    },
+    {
+      "student": "close",
+      "loss": "three_term",
+      "loss_value": 1.3119213581085205,
+      "kl_div_to_teacher": 0.2998884618282318,
+      "f1": 0.879,
+      "kl": 0.124,
+      "std": 0.012
+    },
+    {
+      "student": "close",
+      "loss": "kl_task_reg",
+      "loss_value": 0.46311694383621216,
+      "kl_div_to_teacher": 0.2998884618282318,
+      "f1": 0.908,
+      "kl": 0.041,
+      "std": 0.009
+    },
+    {
+      "student": "medium",
+      "loss": "pure_kl",
+      "loss_value": 7.388786315917969,
+      "kl_div_to_teacher": 7.388786315917969,
+      "f1": null,
+      "kl": 0.007,
+      "std": 0.005
+    },
+    {
+      "student": "medium",
+      "loss": "mse",
+      "loss_value": 0.2493239790201187,
+      "kl_div_to_teacher": 7.388786315917969,
+      "f1": null,
+      "kl": 0.082,
+      "std": 0.01
+    },
+    {
+      "student": "medium",
+      "loss": "cross_entropy",
+      "loss_value": 2.0409982204437256,
+      "kl_div_to_teacher": 7.388786315917969,
+      "f1": null,
+      "kl": 0.311,
+      "std": 0.014
+    },
+    {
+      "student": "medium",
+      "loss": "three_term",
+      "loss_value": 4.224853515625,
+      "kl_div_to_teacher": 7.388786315917969,
+      "f1": null,
+      "kl": 0.124,
+      "std": 0.012
+    },
+    {
+      "student": "medium",
+      "loss": "kl_task_reg",
+      "loss_value": 6.854007244110107,
+      "kl_div_to_teacher": 7.388786315917969,
+      "f1": null,
+      "kl": 0.041,
+      "std": 0.009
+    },
+    {
+      "student": "far",
+      "loss": "pure_kl",
+      "loss_value": 63.70478057861328,
+      "kl_div_to_teacher": 63.70478057861328,
+      "f1": null,
+      "kl": 0.007,
+      "std": 0.005
+    },
+    {
+      "student": "far",
+      "loss": "mse",
+      "loss_value": 2.2546539306640625,
+      "kl_div_to_teacher": 63.70478057861328,
+      "f1": null,
+      "kl": 0.082,
+      "std": 0.01
+    },
+    {
+      "student": "far",
+      "loss": "cross_entropy",
+      "loss_value": 2.9127206802368164,
+      "kl_div_to_teacher": 63.70478057861328,
+      "f1": null,
+      "kl": 0.311,
+      "std": 0.014
+    },
+    {
+      "student": "far",
+      "loss": "three_term",
+      "loss_value": 27.386852264404297,
+      "kl_div_to_teacher": 63.70478057861328,
+      "f1": null,
+      "kl": 0.124,
+      "std": 0.012
+    },
+    {
+      "student": "far",
+      "loss": "kl_task_reg",
+      "loss_value": 57.625572204589844,
+      "kl_div_to_teacher": 63.70478057861328,
+      "f1": null,
+      "kl": 0.041,
+      "std": 0.009
+    }
+  ]
+}

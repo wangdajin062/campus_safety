@@ -1,0 +1,35 @@
+{
+  "experiment": "ovf_step_ratio",
+  "results": [
+    {
+      "ratio_pct": 0,
+      "f1": 0.916,
+      "ppl": 8.73
+    },
+    {
+      "ratio_pct": 10,
+      "f1": 0.919,
+      "ppl": 8.68
+    },
+    {
+      "ratio_pct": 20,
+      "f1": 0.921,
+      "ppl": 8.65
+    },
+    {
+      "ratio_pct": 30,
+      "f1": 0.923,
+      "ppl": 8.62
+    },
+    {
+      "ratio_pct": 40,
+      "f1": 0.922,
+      "ppl": 8.63
+    },
+    {
+      "ratio_pct": 50,
+      "f1": 0.918,
+      "ppl": 8.66
+    }
+  ]
+}
