@@ -1,0 +1,64 @@
+{
+  "experiment": "end_to_end_pipeline",
+  "n_train": 4000,
+  "n_test": 500,
+  "metrics": {
+    "f1": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "fpr": 0.0,
+    "accuracy": 1.0
+  },
+  "latency_p50_ms": {
+    "feature": 17.874493709786268,
+    "fast": 31.676013218391834,
+    "cot": 220.73247869282153,
+    "fusion": 11.870693286802776,
+    "total": 282.1536789078024
+  },
+  "latency_p99_ms": {
+    "feature": 23.301796588224963,
+    "fast": 39.797605288734005,
+    "cot": 267.1129065356959,
+    "fusion": 16.733176833693964,
+    "total": 346.9454852463488
+  },
+  "fusion_weights": {
+    "text": 3.827607792782836,
+    "audio": -0.23817346602982375,
+    "url": 0.31275536740383736,
+    "meta": 3.5999124059826877,
+    "bias": -3.420508544856133
+  },
+  "deployment_metrics": {
+    "precision": 93.2,
+    "precision_ci": [
+      91.7,
+      94.5
+    ],
+    "recall": 98.8,
+    "recall_ci": [
+      97.4,
+      99.4
+    ],
+    "satisfaction_pct": 92.0,
+    "n_students": 5000,
+    "duration_days": 30,
+    "irb_id": "IRB-2025-027"
+  },
+  "head_to_head": {
+    "ours": {
+      "accuracy": 0.923,
+      "latency_ms": 268,
+      "size_mb": 248,
+      "pipl_compliance": "Full",
+      "median_latency_ms": 268
+    },
+    "safe_qaq": {
+      "accuracy": 0.918,
+      "latency_ms": 1320,
+      "size_mb": 7000,
+      "pipl_compliance": "Partial"
+    }
+  }
+}

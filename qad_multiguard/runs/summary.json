@@ -1,0 +1,32 @@
+{
+  "quant_quality": {
+    "experiment": "quantization_quality"
+  },
+  "end_to_end": {
+    "experiment": "end_to_end_pipeline"
+  },
+  "loss": {
+    "experiment": "loss_ablation"
+  },
+  "ovf": {
+    "experiment": "ovf_ablation"
+  },
+  "speculative": {
+    "experiment": "speculative_decoding"
+  },
+  "fusion_cv": {
+    "experiment": "fusion_cv"
+  },
+  "privacy": {
+    "experiment": "privacy_glo"
+  },
+  "adversarial": {
+    "experiment": "adversarial_robustness"
+  },
+  "teacher_selection": {
+    "experiment": "teacher_selection"
+  },
+  "ovf_step_ratio": {
+    "experiment": "ovf_step_ratio"
+  }
+}

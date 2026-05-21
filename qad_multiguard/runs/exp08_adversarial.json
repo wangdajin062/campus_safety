@@ -1,0 +1,8 @@
+{
+  "experiment": "adversarial_robustness",
+  "iid_f1": 1.0,
+  "adv_f1": 0.9642037631941257,
+  "drop": 0.03579623680587429,
+  "n_iid": 500,
+  "n_adv": 2257
+}

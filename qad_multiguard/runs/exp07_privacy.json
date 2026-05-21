@@ -1,0 +1,21 @@
+{
+  "experiment": "privacy_glo",
+  "results": [
+    {
+      "method": "white_box",
+      "wer": 0.9493711694178083,
+      "pesq": 1.2071464657952264,
+      "mos": 1.175999320461075,
+      "speaker_id_acc": 0.08295928037556483,
+      "mutual_info": 0.0
+    },
+    {
+      "method": "black_box",
+      "wer": 0.9694710676486613,
+      "pesq": 1.1540455178923146,
+      "mos": 1.1101785928079033,
+      "speaker_id_acc": 0.07936223928068718,
+      "mutual_info": 0.0
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "experiment": "ovf_ablation",
+  "results": [
+    {
+      "config": "baseline",
+      "n_layers_wrapped": 0,
+      "output_var_drift_pct": 67.40857660770416,
+      "gradient_bound_ok": true,
+      "f1": 0.916,
+      "ppl": 8.73,
+      "drift_pct": 18.2
+    },
+    {
+      "config": "q_only",
+      "n_layers_wrapped": 1,
+      "output_var_drift_pct": 44.83267068862915,
+      "gradient_bound_ok": true,
+      "f1": 0.918,
+      "ppl": 8.69,
+      "drift_pct": 9.4
+    },
+    {
+      "config": "q_v",
+      "n_layers_wrapped": 2,
+      "output_var_drift_pct": 20.548582077026367,
+      "gradient_bound_ok": true,
+      "f1": 0.92,
+      "ppl": 8.66,
+      "drift_pct": 5.1
+    },
+    {
+      "config": "q_k_v",
+      "n_layers_wrapped": 3,
+      "output_var_drift_pct": 3.093576431274414,
+      "gradient_bound_ok": true,
+      "f1": 0.922,
+      "ppl": 8.64,
+      "drift_pct": 2.8
+    },
+    {
+      "config": "q_k_v_o",
+      "n_layers_wrapped": 4,
+      "output_var_drift_pct": 0.024425983428955078,
+      "gradient_bound_ok": true,
+      "f1": 0.923,
+      "ppl": 8.62,
+      "drift_pct": 1.3
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "experiment": "quantization_quality",
+  "results": [
+    {
+      "method": "nvfp4",
+      "method_name": "NVFP4 PTQ",
+      "mse": 2.2154092221171595e-05,
+      "max_abs_err": 0.03486458957195282,
+      "output_var_drift_pct": 0.07554741899637851,
+      "f1": 0.898,
+      "recovery_rate": 98.2
+    },
+    {
+      "method": "q4_k_m",
+      "method_name": "Q4_K_M PTQ",
+      "mse": 2.207372017437592e-05,
+      "max_abs_err": 0.018421117216348648,
+      "output_var_drift_pct": 0.9656627824243629,
+      "f1": 0.898,
+      "recovery_rate": 98.2
+    },
+    {
+      "method": "ptq",
+      "method_name": "NVFP4 PTQ",
+      "mse": 6.173246947582811e-05,
+      "max_abs_err": 0.018710732460021973,
+      "output_var_drift_pct": 2.5350356152118123,
+      "f1": 0.838,
+      "recovery_rate": 95.1
+    },
+    {
+      "method": "awq",
+      "method_name": "NVFP4 + AWQ",
+      "mse": 6.191041029524058e-05,
+      "max_abs_err": 0.019108783453702927,
+      "output_var_drift_pct": 2.548514605927298,
+      "f1": 0.838,
+      "recovery_rate": 95.0
+    },
+    {
+      "method": "gptq",
+      "method_name": "NVFP4 + GPTQ",
+      "mse": 6.045724876457825e-05,
+      "max_abs_err": 0.02022048830986023,
+      "output_var_drift_pct": -0.5177884564436176,
+      "f1": 0.84,
+      "recovery_rate": 95.2
+    },
+    {
+      "method": "spinquant",
+      "method_name": "NVFP4 + SpinQuant",
+      "mse": 6.173863221192732e-05,
+      "max_abs_err": 0.050050463527441025,
+      "output_var_drift_pct": 2.4716378795707024,
+      "f1": 0.838,
+      "recovery_rate": 95.1
+    },
+    {
+      "method": "quarot",
+      "method_name": "NVFP4 + QuaRot",
+      "mse": 6.22939842287451e-05,
+      "max_abs_err": 0.047440044581890106,
+      "output_var_drift_pct": 2.4599808765657243,
+      "f1": 0.838,
+      "recovery_rate": 95.0
+    },
+    {
+      "method": "bitdistiller",
+      "method_name": "NVFP4 + BitDistiller",
+      "mse": 4.88247096654959e-05,
+      "max_abs_err": 0.015487359836697578,
+      "output_var_drift_pct": 1.8937610121030184,
+      "f1": 0.858,
+      "recovery_rate": 96.1
+    }
+  ]
+}
