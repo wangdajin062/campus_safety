@@ -1,0 +1,69 @@
+version: "3.9"
+
+# ═══════════════════════════════════════════════════════════
+# QAD-MultiGuard — Production Override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ═══════════════════════════════════════════════════════════
+
+services:
+
+  api:
+    # Production: build with prod requirements, no bind mount
+    build:
+      args:
+        REQUIREMENTS: requirements.prod.txt
+    volumes:
+      # Remove dev bind mount; use image-internal /app
+      - model_cache:/models
+      - ml_feedback:/app/ml/models
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: info
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+        reservations:
+          memory: 1g
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    # Production: tune worker connections, enable caching
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    # Production: persistent data, backup config
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+        reservations:
+          memory: 512m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

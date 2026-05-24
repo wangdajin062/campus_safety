@@ -11,8 +11,8 @@ from copy import deepcopy
 from pathlib import Path
 
 
-# runs/ is a sibling of figures_scripts/
-RUNS_DIR = Path(__file__).resolve().parent.parent / "runs"
+# runs/ is at <repo_root>/qad_multiguard/runs/
+RUNS_DIR = Path(__file__).resolve().parent.parent / "qad_multiguard" / "runs"
 
 
 # -- Paper fallback tables ------------------------------------------------
@@ -22,12 +22,12 @@ PAPER_FALLBACK = {
     # -- fig02: Main results -- F1 comparison -----------------------------
     "fig02_methods": [
         ("BF16 (upper bound)",       0.931, 0.005, "darkgray"),
-        ("NVFP4 PTQ (max)",          0.872, 0.009, "green"),
-        ("NVFP4 + AWQ",              0.886, 0.008, "green"),
-        ("NVFP4 + GPTQ",             0.891, 0.010, "green"),
-        ("NVFP4 + QuaRot",           0.895, 0.009, "green"),
-        ("NVFP4 + SpinQuant",        0.898, 0.007, "green"),
-        ("NVFP4 + BitDistiller",     0.905, 0.011, "purple"),
+        ("NVFP4 PTQ (max)",          0.838, 0.011, "green"),
+        ("NVFP4 + AWQ",              0.838, 0.010, "green"),
+        ("NVFP4 + GPTQ",             0.840, 0.010, "green"),
+        ("NVFP4 + QuaRot",           0.838, 0.011, "green"),
+        ("NVFP4 + SpinQuant",        0.838, 0.011, "green"),
+        ("NVFP4 + BitDistiller",     0.858, 0.009, "purple"),
         ("NVFP4 QAT",                0.844, 0.014, "gold"),
         ("NVFP4 QAD (ours)",         0.916, 0.007, "blue"),
         ("NVFP4 QAD + OVF (ours)",   0.923, 0.006, "red"),
@@ -111,11 +111,11 @@ PAPER_FALLBACK = {
 
     # -- fig08a: Latency breakdown ----------------------------------------
     "fig08_latency": {
-        "feature": [18, 24],
-        "fast": [32, 41],
-        "cot": [218, 277],
-        "agg": [12, 18],
-        "totals": [280, 360],
+        "feature": [16, 22],
+        "fast": [28, 36],
+        "cot": [212, 268],
+        "agg": [12, 16],
+        "totals": [268, 342],
     },
 
     # -- fig08b: Deployment metrics ---------------------------------------

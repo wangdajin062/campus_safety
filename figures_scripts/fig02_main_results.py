@@ -1,176 +1,117 @@
 """
-Fig 2: Main results on TAF-28k (REVISED)
-FIXES per reviewer:
-  R1: SAFE-QAQ [14] → [27]; BERT-Fraud [16] → [14]
+Figure 2: TAF-28k main results — F1 and recovery rate.
 
-  """
-import os
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+Data source: safety_data.py (mirrors qad_multiguard/runs/exp01_quant_quality.json
++ paper Table II QAT/QAD/QAD+OVF rows). All numbers are authoritative
+and tracked by run_reproduction.py assertions.
+"""
 import numpy as np
-from _fig_data import load_exp_data, fallback
+import matplotlib.pyplot as plt
+import sci_style as sci
+from safety_data import (
+    BF16_F1, BF16_F1_ERR, EXP01_QUANT_QUALITY, EXP01_F1_STD_PER_METHOD,
+    QAT_QAD_OVF, SAFE_QAQ_F1, SAFE_QAQ_F1_ERR,
+)
 
-os.makedirs("./output",exist_ok=True)
+# Build the unified method list directly from safety_data.
+methods = []
+methods.append(("BF16 (upper)", BF16_F1, 100.0, BF16_F1_ERR, "ref"))
 
-plt.rcParams.update({'font.family': 'serif', 'font.serif': ['Times New Roman', 'Times', 'DejaVu Serif']})
+# PTQ family from EXP01 (skip the two PTQ rows that overlap with QAD-improved rows)
+for m in EXP01_QUANT_QUALITY:
+    if m["key"] in {"nvfp4_ptq", "q4_k_m_ptq"}:
+        continue
+    tag = "kd" if m["key"] == "bitdistiller" else "ptq"
+    methods.append((m["name"], m["f1"], m["recovery"],
+                    EXP01_F1_STD_PER_METHOD.get(m["key"], 0.010), tag))
 
-fig, axes = plt.subplots(1, 2, figsize=(16, 9))
+# QAT / QAD / QAD+OVF family
+for m in QAT_QAD_OVF:
+    name = m["name"]
+    if name == "NVFP4 QAT (CE)":
+        tag = "qat"
+    elif "+ OV-Freeze" in name:
+        tag = "ours_full"
+    else:
+        tag = "ours"
+    methods.append((name, m["f1"], m["recovery"], m["f1_err"], tag))
 
+methods.append(("SAFE-QAQ [27]", SAFE_QAQ_F1, None, SAFE_QAQ_F1_ERR, "domain"))
 
-PALETTE = {
-    'navy':    '#1F3864',
-    'blue':    '#2E5C8A',
-    'red':     '#C00000',
-    'orange':  '#E67E22',
-    'green':   '#7CB342',
-    'purple':  '#7030A0',
-    'gold':    '#F4B400',
-    'lblue':   '#A4C8E1',
-    'gray':    '#595959',
-    'darkgray':'#404040',
-    'lightred':'#E6B0AA',
+color_map = {
+    "ref":       "#7f7f7f",
+    "ptq":       "#a8c8e8",
+    "kd":        "#9467bd",
+    "qat":       "#d62728",
+    "ours":      "#ff9c5b",
+    "ours_full": "#ff7f0e",
+    "domain":    "#2ca02c",
 }
 
-fig, axes = plt.subplots(1, 2, figsize=(16, 9))
+fig, (ax1, ax2) = plt.subplots(
+    1, 2, figsize=(7.16, 3.6),
+    gridspec_kw={"width_ratios": [1.5, 1.0], "wspace": 0.50},
+)
 
-# ── (a) F1 comparison ─────────────────────────
-ax = axes[0]
-# Color name resolver for fallback data (strings → PALETTE)
-_C = {
-    'navy': PALETTE['navy'], 'blue': PALETTE['blue'], 'red': PALETTE['red'],
-    'orange': PALETTE['orange'], 'green': PALETTE['green'], 'purple': PALETTE['purple'],
-    'gold': PALETTE['gold'], 'lblue': PALETTE['lblue'], 'gray': PALETTE['gray'],
-    'darkgray': PALETTE['darkgray'], 'lightred': PALETTE['lightred'],
-}
-# Try loading from experiment data
-exp = load_exp_data("exp01_quant_quality.json")
-if exp and all(r.get("f1") for r in exp.get("results", [])):
-    methods = [("BF16 (upper bound)", 0.931, 0.005, _C['darkgray'])]
-    for r in exp["results"]:
-        methods.append((
-            r.get("method_name", r["method"]),
-            r["f1"],
-            r.get("std", 0.007),
-            _C['green'],
-        ))
-    methods.append(("NVFP4 QAD (ours)", 0.916, 0.007, _C['blue']))
-    methods.append(("NVFP4 QAD + OVF (ours)", 0.923, 0.006, _C['red']))
-    methods.append(("SAFE-QAQ [27]", 0.918, 0.006, _C['darkgray']))
-    methods.append(("BERT-Fraud [14]", 0.876, 0.000, _C['darkgray']))
-else:
-    _raw = fallback("fig02_methods")
-    methods = [(n, f, e, _C.get(c, _C['gray'])) for n, f, e, c in _raw]
-
-names = [m[0] for m in methods]
-f1s   = [m[1] for m in methods]
-errs  = [m[2] for m in methods]
-colors= [m[3] for m in methods]
-
-y_pos = np.arange(len(methods))
-bars = ax.barh(y_pos, f1s, xerr=errs, color=colors, edgecolor='black',
-               linewidth=0.8, capsize=4, alpha=0.9, height=0.7)
-
-# Highlight ours
+# (a) F1 bar chart
+y = np.arange(len(methods))[::-1]
+f1s    = [m[1] for m in methods]
+errs   = [m[3] for m in methods]
+colors = [color_map[m[4]] for m in methods]
+bars = ax1.barh(y, f1s, xerr=errs, color=colors,
+                edgecolor="black", lw=0.5, capsize=2.5,
+                error_kw={"elinewidth": 0.6, "ecolor": "#333"})
 for i, m in enumerate(methods):
-    if "ours" in m[0]:
-        bars[i].set_edgecolor(PALETTE['red'])
-        bars[i].set_linewidth(2.2)
+    if m[4] == "ours_full":
+        bars[i].set_edgecolor("#cc5500")
+        bars[i].set_linewidth(1.4)
 
-# Numeric labels — placed outside error bar with clear gap
-for i, (v, e) in enumerate(zip(f1s, errs)):
-    is_best = "OVF" in methods[i][0] and "ours" in methods[i][0]
-    weight = 'bold' if is_best else 'normal'
-    ax.text(v + e + 0.008, i, f"{v:.3f}", va='center', ha='left', fontsize=9,
-            fontweight=weight, color=PALETTE['navy'])
+ax1.set_yticks(y)
+ax1.set_yticklabels([m[0] for m in methods], fontsize=7.5)
+ax1.set_xlim(0.78, 0.95)
+ax1.set_xlabel("F1 score on TAF-28k test")
+ax1.set_title(f"(a) F1 vs {len(methods)-1} baselines",
+              weight="bold", fontsize=9.5)
+ax1.axvline(BF16_F1, color="#555", lw=0.6, ls="--", alpha=0.7)
+ax1.text(BF16_F1, len(methods) - 0.3, " BF16 ceiling",
+         fontsize=6.5, color="#555", va="bottom")
+for i, m in enumerate(methods):
+    if m[4] == "ours_full":
+        ax1.text(m[1] - 0.003, y[i], f"{m[1]:.3f}",
+                 va="center", ha="right", fontsize=7,
+                 color="white", weight="bold")
 
-ax.set_yticks(y_pos)
-ax.set_yticklabels(names, fontsize=9.5)
-ax.invert_yaxis()
-ax.set_xlabel("F1 score on TAF-28k (mean ± std, 5 runs)", fontsize=11)
-ax.set_title("(a)  Comparison with SOTA baselines", fontsize=13, fontweight='bold')
-ax.set_xlim(0.82, 0.96)
-ax.grid(True, axis='x', alpha=0.3)
-ax.axvline(x=0.931, color=PALETTE['darkgray'], linestyle='--', linewidth=1.0, alpha=0.5)
+# (b) Recovery rate
+methods_b = [m for m in methods if m[2] is not None]
+y2        = np.arange(len(methods_b))[::-1]
+recovery  = [m[2] for m in methods_b]
+colors2   = [color_map[m[4]] for m in methods_b]
+ax2.barh(y2, recovery, color=colors2, edgecolor="black", lw=0.5)
+ax2.set_yticks(y2)
+ax2.set_yticklabels([m[0] for m in methods_b], fontsize=7.5)
+ax2.set_xlim(89, 101)
+ax2.set_xlabel("Recovery rate (%)  vs BF16")
+ax2.set_title("(b) Accuracy recovery", weight="bold", fontsize=9.5)
+ax2.axvline(99.0, color="#cc5500", lw=0.7, ls=":", alpha=0.8)
+ax2.text(99.0, len(methods_b) - 0.3, " 99% target",
+         fontsize=6.5, color="#cc5500", va="bottom")
+for i, m in enumerate(methods_b):
+    if m[4] == "ours_full":
+        ax2.text(m[2] - 0.4, y2[i], f"{m[2]:.1f}",
+                 va="center", ha="right", fontsize=7,
+                 color="white", weight="bold")
 
-# Legend
-legend_elements = [
-    mpatches.Patch(color=PALETTE['darkgray'], label='BF16 / Domain SOTA'),
-    mpatches.Patch(color=PALETTE['green'],    label='Advanced PTQ (NVFP4)'),
-    mpatches.Patch(color=PALETTE['purple'],   label='Self-distillation quant.'),
-    mpatches.Patch(color=PALETTE['gold'],     label='QAT (cross-entropy)'),
-    mpatches.Patch(color=PALETTE['blue'],     label='Ours: NVFP4/Q4_K_M QAD'),
-    mpatches.Patch(color=PALETTE['red'],      label='Ours: NVFP4 QAD + OVF'),
-    mpatches.Patch(color=PALETTE['orange'],   label='Ours: Q4_K_M QAD + OVF'),
-    mpatches.Patch(color=PALETTE['lblue'],    label='Q4_K_M PTQ'),
+from matplotlib.patches import Patch
+legend_items = [
+    Patch(facecolor=color_map["ref"],       label="BF16 upper bound"),
+    Patch(facecolor=color_map["ptq"],       label="Advanced PTQ"),
+    Patch(facecolor=color_map["kd"],        label="Self-distillation"),
+    Patch(facecolor=color_map["qat"],       label="QAT (cross-entropy)"),
+    Patch(facecolor=color_map["ours_full"], edgecolor="#cc5500", lw=1.2, label="Ours"),
+    Patch(facecolor=color_map["domain"],    label="Domain baseline"),
 ]
-ax.legend(handles=legend_elements, loc='lower right', fontsize=8.5, framealpha=0.95)
+fig.legend(handles=legend_items, loc="upper center", ncol=6,
+           bbox_to_anchor=(0.5, 1.02), fontsize=7.5, frameon=False)
 
-# ── (b) Recovery rate ─────────────────────────
-ax = axes[1]
-if exp and all(r.get("f1") for r in exp.get("results", [])):
-    bf16_rec = ("BF16 (upper bound)", 100.0, _C['darkgray'])
-    rec_data = [bf16_rec]
-    for r in exp["results"]:
-        rec_data.append((
-            r.get("method_name", r["method"]),
-            r.get("recovery_rate", 95.0),
-            _C['green'],
-        ))
-    rec_data.append(("NVFP4 QAD (ours)", 98.4, _C['blue']))
-    rec_data.append(("NVFP4 QAD + OVF (ours)", 99.1, _C['red']))
-else:
-    _raw2 = [
-        ("BF16 (upper bound)",       100.0, 'darkgray'),
-        ("NVFP4 PTQ",                93.7,  'green'),
-        ("NVFP4 + AWQ",              95.2,  'green'),
-        ("NVFP4 + GPTQ",             95.7,  'green'),
-        ("NVFP4 + QuaRot",           96.1,  'green'),
-        ("NVFP4 + SpinQuant",        96.5,  'green'),
-        ("NVFP4 + BitDistiller",     97.2,  'purple'),
-        ("NVFP4 QAT",                90.7,  'gold'),
-        ("NVFP4 QAD (ours)",         98.4,  'blue'),
-        ("NVFP4 QAD + OVF (ours)",   99.1,  'red'),
-        ("Q4_K_M PTQ",               91.4,  'lblue'),
-        ("Q4_K_M QAD (ours)",        97.9,  'blue'),
-        ("Q4_K_M QAD + OVF (ours)",  98.5,  'orange'),
-    ]
-    rec_data = [(n, v, _C.get(c, _C['gray'])) for n, v, c in _raw2]
-
-names2 = [r[0] for r in rec_data]
-recs   = [r[1] for r in rec_data]
-colors2= [r[2] for r in rec_data]
-
-y_pos2 = np.arange(len(rec_data))
-bars2 = ax.barh(y_pos2, recs, color=colors2, edgecolor='black',
-                linewidth=0.8, alpha=0.9, height=0.7)
-for i, r in enumerate(rec_data):
-    if "ours" in r[0]:
-        bars2[i].set_edgecolor(PALETTE['red'])
-        bars2[i].set_linewidth(2.2)
-
-for i, v in enumerate(recs):
-    is_best = "OVF" in rec_data[i][0]
-    weight = 'bold' if is_best else 'normal'
-    color = PALETTE['red'] if is_best else PALETTE['navy']
-    ax.text(v + 0.6, i, f"{v:.1f}%", va='center', ha='left', fontsize=9,
-            fontweight=weight, color=color)
-
-ax.set_yticks(y_pos2)
-ax.set_yticklabels(names2, fontsize=9.5)
-ax.invert_yaxis()
-ax.set_xlabel("Recovery rate vs BF16 (%)", fontsize=11)
-ax.set_title("(b)  Accuracy recovery of quantized models", fontsize=13, fontweight='bold')
-ax.set_xlim(88, 102)
-ax.grid(True, axis='x', alpha=0.3)
-ax.axvline(x=100, color=PALETTE['navy'], linestyle='--', linewidth=1.2, alpha=0.7)
-ax.text(101.2, -0.5, "BF16 (100%)", fontsize=9, color=PALETTE['navy'],
-        fontweight='bold', ha='left', va='top')
-
-fig.text(0.5, 0.02,
-         "Fig. 2.  Main results on TAF-28k. NVFP4 entries are emulated on H100 (validated against NVIDIA Nemotron Nano 9B V2; gap < 0.3 pp).",
-         ha='center', fontsize=10, style='italic')
-
-plt.tight_layout(rect=[0, 0.04, 1, 1])
-plt.savefig('./output/fig02_main_results.png', dpi=240, bbox_inches='tight', facecolor='white')
-plt.close()
-print("✓ fig02 regenerated with corrected citations")
+sci.save(fig, "fig02_main_results.png", w=7.16, h=3.6)
+print("Saved fig02_main_results.png")

@@ -1,173 +1,111 @@
 """
-Figure 4: OV-Freeze Detailed Analysis (Layer & Step-Ratio)
-对应论文 §5.7.1 表 IX (layer ablation) + §5.7.2 表 X (step-ratio)
+Figure 4: OV-Freeze layer selection & training-step ratio ablation.
+
+Data source: safety_data.py (EXP04 layer ablation + EXP10 step ratio).
+Note: FFN-only and q,k,v,o+FFN rows are paper-extension points
+(from_json=False); the other rows come directly from the JSON.
 """
 import matplotlib.pyplot as plt
+import sci_style as sci
+from safety_data import EXP04_OVF_LAYER_ABLATION, EXP10_OVF_STEP_RATIO
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.16, 3.0),
+                                gridspec_kw={"wspace": 0.35})
+
+# ---- (a) Layer selection ablation ----
+label_map = {
+    "baseline":    "No OVF\n(baseline)",
+    "FFN_only":    "FFN\nonly",
+    "q_only":      "q\nonly",
+    "q_v":         "q, v",
+    "q_k_v":       "q, k, v",
+    "q_k_v_o":     "q, k, v, o\n(ours)",
+    "q_k_v_o+FFN": "q,k,v,o\n+ FFN",
+}
+configs = [label_map[r["config"]] for r in EXP04_OVF_LAYER_ABLATION]
+f1      = [r["f1"]                 for r in EXP04_OVF_LAYER_ABLATION]
+drift   = [r["drift_pct"]          for r in EXP04_OVF_LAYER_ABLATION]
+from_json = [r["from_json"]        for r in EXP04_OVF_LAYER_ABLATION]
+
 import numpy as np
-import sys, os
-sys.path.insert(0, os.path.dirname(__file__))
-from sci_style import PALETTE, apply_sci_style, save_fig
-from _fig_data import load_exp_data, fallback
+x = np.arange(len(configs))
 
-apply_sci_style()
+color1, color2 = "#1f77b4", "#d62728"
+bars = ax1.bar(x, f1, color=color1, edgecolor="black", lw=0.5,
+               alpha=0.85, label="F1 (↑)")
 
+# Highlight the "ours" config (q_k_v_o)
+ours_idx = next(i for i, r in enumerate(EXP04_OVF_LAYER_ABLATION)
+                if r["config"] == "q_k_v_o")
+bars[ours_idx].set_color("#ff7f0e")
+bars[ours_idx].set_edgecolor("#cc5500")
+bars[ours_idx].set_linewidth(1.3)
 
-def make_figure():
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5))
+# Hatch the paper-extension bars
+for i, fj in enumerate(from_json):
+    if not fj:
+        bars[i].set_hatch("///")
+        bars[i].set_alpha(0.7)
 
-    # ── (a) 层选择消融 (Progressive Layer Ablation) ───────
-    exp4 = load_exp_data("exp04_ovf_ablation.json")
-    if exp4 and all(r.get("f1") for r in exp4.get("results", [])):
-        layers = [r["config"] for r in exp4["results"]]
-        f1_l = [r["f1"] for r in exp4["results"]]
-        ppl_l = [r.get("ppl", 8.62) for r in exp4["results"]]
-        drift_l = [r.get("drift_pct", 1.3) for r in exp4["results"]]
-    else:
-        layers = ['Baseline\n(no OVF)', 'FFN only', 'q only', 'q,v', 'q,k,v',
-                  'q,k,v,o\n(ours)', 'q,k,v,o\n+ FFN']
-        f1_l = [0.916, 0.918, 0.918, 0.920, 0.922, 0.923, 0.922]
-        ppl_l = [8.73, 8.71, 8.69, 8.66, 8.64, 8.62, 8.63]
-        drift_l = [18.2, 15.4, 9.4, 5.1, 2.8, 1.3, 1.5]
+ax1.set_xticks(x)
+ax1.set_xticklabels(configs, fontsize=6.8)
+ax1.set_ylabel("F1 score", color=color1)
+ax1.set_ylim(0.910, 0.928)
+ax1.tick_params(axis="y", labelcolor=color1)
+ax1.set_title("(a) Layer-selection ablation (Table VI)",
+              weight="bold", fontsize=9.5)
 
-    x = np.arange(len(layers))
-    
-    # 主轴: F1
-    color_f1 = PALETTE['red']
-    line1 = ax1.plot(x, f1_l, 'o-', color=color_f1, linewidth=2.0,
-                      markersize=7, markeredgecolor='#641E16', markeredgewidth=0.7,
-                      label='F1 score', zorder=5)
-    
-    # 标注 F1 值
-    for i, f in enumerate(f1_l):
-        ax1.annotate(f'{f:.3f}', xy=(i, f),
-                     xytext=(0, 8), textcoords='offset points',
-                     fontsize=7.5, ha='center', color=color_f1,
-                     fontweight='bold' if i == 5 else 'normal')
+ax1b = ax1.twinx()
+ax1b.grid(False)
+ax1b.plot(x, drift, "o-", color=color2, lw=1.5, ms=5, label="Var drift (↓)")
+ax1b.set_ylabel("Output variance drift (%)", color=color2)
+ax1b.set_ylim(0, 22)
+ax1b.tick_params(axis="y", labelcolor=color2)
+ax1b.spines["right"].set_visible(True)
+ax1b.spines["right"].set_color(color2)
+ax1b.spines["top"].set_visible(False)
+ax1b.spines["left"].set_visible(False)
 
-    # 高亮我方设置
-    ax1.scatter([5], [f1_l[5]], s=240, color='none',
-                 edgecolor=PALETTE['red'], linewidth=2.0, zorder=6)
+ax1.annotate("Best F1 +\nlowest drift",
+             xy=(ours_idx, f1[ours_idx]), xytext=(2.3, 0.9255),
+             fontsize=6.5, color="#cc5500", ha="center", weight="bold",
+             arrowprops=dict(arrowstyle="->", lw=0.8, color="#cc5500"))
 
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(layers, fontsize=8)
-    ax1.set_ylabel('F1 score', fontsize=10, fontweight='bold', color=color_f1)
-    ax1.set_ylim(0.910, 0.930)
-    ax1.tick_params(axis='y', colors=color_f1)
-    ax1.spines['left'].set_color(color_f1)
+# Footnote: explain hatched bars
+ax1.text(0, 0.911, "hatched: paper extension; solid: from runs/exp04.json",
+         fontsize=5.5, color="#666", style="italic")
 
-    # 副轴: 方差漂移
-    ax1b = ax1.twinx()
-    color_drift = PALETTE['navy']
-    bars = ax1b.bar(x, drift_l, color=color_drift, alpha=0.25,
-                     edgecolor=color_drift, linewidth=0.7, width=0.6, zorder=1,
-                     label='Variance drift (%)')
-    
-    for i, d in enumerate(drift_l):
-        ax1b.text(i, d + 0.6, f'{d:.1f}', ha='center', va='bottom',
-                  fontsize=7.5, color=color_drift,
-                  fontweight='bold' if i == 5 else 'normal')
+# ---- (b) Step-ratio ablation ----
+ratios = [r["ratio_pct"] for r in EXP10_OVF_STEP_RATIO]
+f1_r   = [r["f1"]        for r in EXP10_OVF_STEP_RATIO]
+ppl_r  = [r["ppl"]       for r in EXP10_OVF_STEP_RATIO]
 
-    ax1b.set_ylabel('Sensitive-layer variance drift (%)', fontsize=10,
-                     fontweight='bold', color=color_drift)
-    ax1b.set_ylim(0, 22)
-    ax1b.tick_params(axis='y', colors=color_drift)
-    ax1b.spines['right'].set_visible(True)
-    ax1b.spines['right'].set_color(color_drift)
-    ax1b.grid(False)
+ax2.plot(ratios, f1_r, "o-", color="#1f77b4", lw=1.5, ms=6, label="F1 (↑)")
+ax2.plot(30, 0.923, "o", color="#ff7f0e", ms=11,
+         markeredgecolor="#cc5500", lw=1.5, zorder=5)
+ax2.set_xlabel("OV-Freeze training-step ratio (%)")
+ax2.set_ylabel("F1 score", color="#1f77b4")
+ax2.set_ylim(0.913, 0.926)
+ax2.tick_params(axis="y", labelcolor="#1f77b4")
+ax2.set_title("(b) Step-ratio ablation (Table VII)",
+              weight="bold", fontsize=9.5)
 
-    ax1.set_title('(a)  OV-Freeze layer-selection ablation',
-                   fontsize=10.5, fontweight='bold', loc='left', pad=12)
+ax2b = ax2.twinx()
+ax2b.grid(False)
+ax2b.plot(ratios, ppl_r, "s--", color="#d62728", lw=1.5, ms=5, label="PPL (↓)")
+ax2b.set_ylabel("Perplexity", color="#d62728")
+ax2b.tick_params(axis="y", labelcolor="#d62728")
+ax2b.set_ylim(8.58, 8.78)
+ax2b.spines["right"].set_visible(True)
+ax2b.spines["right"].set_color("#d62728")
+ax2b.spines["top"].set_visible(False)
 
-    # 联合图例
-    h1, l1 = ax1.get_legend_handles_labels()
-    h2, l2 = ax1b.get_legend_handles_labels()
-    leg = ax1.legend(h1 + h2, l1 + l2, loc='upper right', fontsize=8.5,
-                      framealpha=0.95)
-    leg.get_frame().set_edgecolor('#808080')
+ax2.axvspan(45, 50.5, color="#ffcccc", alpha=0.4, zorder=0)
+ax2.text(47.5, 0.914, "gradient\noscillation", fontsize=6.3,
+         ha="center", color="#a02020", style="italic")
+ax2.axvline(30, color="#cc5500", lw=0.5, ls=":", alpha=0.7)
+ax2.text(30, 0.9248, "ours: 30%", fontsize=6.5, color="#cc5500",
+         ha="center", weight="bold")
 
-    # ── (b) 训练步比例敏感性 ───────────────────────────────
-    exp10 = load_exp_data("exp10_ovf_step_ratio.json")
-    if exp10 and exp10.get("results"):
-        ratios = [r["ratio_pct"] for r in exp10["results"]]
-        f1_r = [r["f1"] for r in exp10["results"]]
-        ppl_r = [r["ppl"] for r in exp10["results"]]
-    else:
-        ratios = [0, 10, 20, 30, 40, 50]
-        f1_r = [0.916, 0.919, 0.921, 0.923, 0.922, 0.918]
-        ppl_r = [8.73, 8.68, 8.65, 8.62, 8.63, 8.66]
-
-    # 双线图
-    color_f1 = PALETTE['red']
-    color_ppl = PALETTE['navy']
-
-    line_f1, = ax2.plot(ratios, f1_r, 'o-', color=color_f1, linewidth=2.0,
-                         markersize=8, markeredgecolor='#641E16', markeredgewidth=0.7,
-                         label='F1 score', zorder=5)
-    
-    # 标注 F1 + 高亮 30%
-    for r, f in zip(ratios, f1_r):
-        weight = 'bold' if r == 30 else 'normal'
-        ax2.annotate(f'{f:.3f}', xy=(r, f),
-                     xytext=(0, 9), textcoords='offset points',
-                     fontsize=7.5, ha='center', color=color_f1, fontweight=weight)
-
-    ax2.scatter([30], [0.923], s=300, color='none',
-                 edgecolor=PALETTE['red'], linewidth=2.0, zorder=6)
-
-    ax2.set_xticks(ratios)
-    ax2.set_xticklabels([f'{r}%' for r in ratios], fontsize=9)
-    ax2.set_ylabel('F1 score', fontsize=10, fontweight='bold', color=color_f1)
-    ax2.set_ylim(0.913, 0.928)
-    ax2.set_xlabel('OV-Freeze training-step ratio', fontsize=10, fontweight='bold')
-    ax2.tick_params(axis='y', colors=color_f1)
-
-    # PPL 副轴
-    ax2b = ax2.twinx()
-    line_ppl, = ax2b.plot(ratios, ppl_r, 's--', color=color_ppl, linewidth=1.6,
-                           markersize=7, markeredgecolor='#1F3864', markeredgewidth=0.6,
-                           alpha=0.85, label='PPL', zorder=4)
-    for r, p in zip(ratios, ppl_r):
-        ax2b.annotate(f'{p:.2f}', xy=(r, p),
-                      xytext=(0, -15), textcoords='offset points',
-                      fontsize=7.5, ha='center', color=color_ppl)
-    ax2b.set_ylabel('Perplexity (PPL)', fontsize=10, fontweight='bold',
-                     color=color_ppl)
-    ax2b.set_ylim(8.55, 8.78)
-    ax2b.tick_params(axis='y', colors=color_ppl)
-    ax2b.spines['right'].set_visible(True)
-    ax2b.spines['right'].set_color(color_ppl)
-    ax2b.grid(False)
-
-    # 标注最佳点
-    ax2.annotate('Optimal\n30%', xy=(30, 0.923), xytext=(36, 0.926),
-                 fontsize=9, fontweight='bold', color=PALETTE['red'],
-                 ha='center',
-                 arrowprops=dict(arrowstyle='->', color=PALETTE['red'], lw=1.0))
-
-    # 不稳定标注
-    ax2.annotate('Gradient\noscillation', xy=(50, 0.918), xytext=(48, 0.916),
-                 fontsize=8, color=PALETTE['orange'], ha='center', style='italic',
-                 arrowprops=dict(arrowstyle='->', color=PALETTE['orange'], lw=0.8))
-
-    ax2.set_title('(b)  OV-Freeze training-step ratio sensitivity',
-                   fontsize=10.5, fontweight='bold', loc='left', pad=12)
-
-    # 联合图例
-    leg2 = ax2.legend([line_f1, line_ppl], ['F1 score', 'PPL'],
-                       loc='lower center', fontsize=8.5, framealpha=0.95)
-    leg2.get_frame().set_edgecolor('#808080')
-
-    fig.text(0.5, -0.02,
-             'Fig. 4.  OV-Freeze regularizer ablation. (a) Applying OV-Freeze to all four attention projections is optimal. (b) 30% training-step ratio strikes the best balance.',
-             ha='center', fontsize=9, style='italic', color='#404040')
-
-    plt.tight_layout()
-    return fig
-
-
-if __name__ == '__main__':
-    fig = make_figure()
-    save_fig(fig, 'fig04_ovf_ablation',
-             formats=('pdf', 'png'), out_dir='./output')
-    plt.close(fig)
-    print('Figure 4 done.')
+sci.save(fig, "fig04_ovf_ablation.png", w=7.16, h=3.0)
+print("Saved fig04_ovf_ablation.png")

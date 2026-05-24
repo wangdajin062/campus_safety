@@ -1,186 +1,103 @@
 """
-Fig 6: Multimodal fusion (REVISED)
-FIXES per reviewer:
-  R4: "0.5 ms" labels → "<1 ms" to match Table XII
-  R5: Cleaner ΔF1 annotations in panel (a) - separate +0.022 and +0.012
+Figure 6: Multimodal fusion analysis.
+
+Data source: safety_data.py (EXP06: progressive_f1, fold_weights, architecture).
 """
-import matplotlib.pyplot as plt
 import numpy as np
-from _fig_data import load_exp_data, fallback
+import matplotlib.pyplot as plt
+import sci_style as sci
+from safety_data import (
+    EXP06_PROGRESSIVE_F1, EXP06_FOLD_WEIGHTS, EXP06_MEAN_WEIGHTS,
+    EXP06_ARCHITECTURE,
+)
 
-plt.rcParams.update({'font.family': 'serif', 'font.serif': ['Times New Roman', 'Times', 'DejaVu Serif']})
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(7.16, 2.7),
+                                     gridspec_kw={"wspace": 0.42})
 
-PALETTE = {
-    'navy':   '#1F3864',
-    'blue':   '#2E5C8A',
-    'sky':    '#4A90C2',
-    'red':    '#C00000',
-    'orange': '#E67E22',
-    'green':  '#7CB342',
-    'gray':   '#808080',
-    'purple': '#7030A0',
-    'lpurple':'#D9C2E9',
-    'lred':   '#FBE9E9',
-    'lgray':  '#E0E0E0',
-}
-
-fig, axes = plt.subplots(1, 3, figsize=(18, 5.8))
-
-# ── (a) Progressive contribution ────────────
-ax = axes[0]
-exp6 = load_exp_data("exp06_fusion_cv.json")
-if exp6 and exp6.get("progressive_f1"):
-    modalities = [r["modality"] for r in exp6["progressive_f1"]]
-    f1_scores = [r["f1"] for r in exp6["progressive_f1"]]
-    deltas = [str(r["delta"]) for r in exp6["progressive_f1"]]
-    deltas[0] = "—"
-else:
-    modalities = ['Text\n(SMS)', '+ Metadata\n(call)', '+ URL\nfeatures', '+ Acoustic\n(128-d $F_v$)']
-    f1_scores  = [0.872, 0.889, 0.901, 0.923]
-    deltas     = ['—', '+0.017', '+0.012', '+0.022']
-colors     = [PALETTE['sky'], PALETTE['green'], PALETTE['orange'], PALETTE['red']]
+# ---- (a) Progressive modality contribution ----
+modalities = [r["modality"] for r in EXP06_PROGRESSIVE_F1]
+f1_prog    = [r["f1"]       for r in EXP06_PROGRESSIVE_F1]
+deltas     = [r["delta"]    for r in EXP06_PROGRESSIVE_F1]
 
 x = np.arange(len(modalities))
-bars = ax.bar(x, f1_scores, color=colors, edgecolor='black', linewidth=1.0,
-              alpha=0.9, width=0.6)
-bars[-1].set_edgecolor(PALETTE['red'])
-bars[-1].set_linewidth(2.4)
+colors_prog = ["#bbbbbb", "#aaccdd", "#7fa9c8", "#ff7f0e"]
+bars = ax1.bar(x, f1_prog, color=colors_prog, edgecolor="black", lw=0.5)
+bars[-1].set_edgecolor("#cc5500")
+bars[-1].set_linewidth(1.3)
 
-# F1 labels above bars
-for i, v in enumerate(f1_scores):
-    weight = 'bold' if i == 3 else 'normal'
-    ax.text(i, v + 0.002, f"{v:.3f}", ha='center', va='bottom',
-            fontsize=11, fontweight=weight, color=PALETTE['navy'])
+ax1.set_xticks(x)
+ax1.set_xticklabels(modalities, fontsize=7)
+ax1.set_ylabel("F1 score")
+ax1.set_ylim(0.85, 0.94)
+ax1.set_title("(a) Progressive contribution (Table XI)",
+              weight="bold", fontsize=9)
 
-# ΔF1 labels — R5 fix: place separately to avoid overlap
-delta_y = [None, 0.880, 0.895, 0.912]
-for i in [1, 2, 3]:
-    ax.text(i - 0.5, delta_y[i], deltas[i], ha='center', va='center',
-            fontsize=11, color=PALETTE['orange'], fontweight='bold',
-            bbox=dict(facecolor='white', edgecolor=PALETTE['orange'],
-                     boxstyle='round,pad=0.25'))
+for i in range(1, len(modalities)):
+    ax1.annotate(f"+{deltas[i]:.3f}",
+                 xy=(x[i], f1_prog[i]),
+                 xytext=(x[i], f1_prog[i] + 0.005),
+                 ha="center", fontsize=6.8,
+                 color="#cc5500", weight="bold")
 
-# Annotation for largest gain
-ax.annotate("Acoustic features\n+0.022 F1\n(prosodic cues)",
-            xy=(3, 0.923), xytext=(2.2, 0.94),
-            fontsize=10.5, color=PALETTE['red'], fontweight='bold',
-            arrowprops=dict(arrowstyle='->', lw=1.3, color=PALETTE['red']),
-            bbox=dict(facecolor=PALETTE['lred'], edgecolor=PALETTE['red'],
-                     boxstyle='round,pad=0.3'))
+# ---- (b) 5-fold CV weight stability ----
+folds   = [r["fold"]    for r in EXP06_FOLD_WEIGHTS]
+w_text  = [r["w_text"]  for r in EXP06_FOLD_WEIGHTS]
+w_audio = [r["w_audio"] for r in EXP06_FOLD_WEIGHTS]
+w_url   = [r["w_url"]   for r in EXP06_FOLD_WEIGHTS]
+w_meta  = [r["w_meta"]  for r in EXP06_FOLD_WEIGHTS]
 
-ax.set_xticks(x)
-ax.set_xticklabels(modalities, fontsize=10.5)
-ax.set_ylabel("F1 score", fontsize=11)
-ax.set_title("(a)  Progressive contribution", fontsize=12.5, fontweight='bold')
-ax.set_ylim(0.85, 0.96)
-ax.grid(True, axis='y', alpha=0.3)
+mw = EXP06_MEAN_WEIGHTS
+ax2.plot(folds, w_text,  "o-", color="#1f77b4", lw=1.3, ms=5,
+         label=f"$w_{{\\rm text}}$  (μ={mw['w_text']:.2f})")
+ax2.plot(folds, w_audio, "s-", color="#ff7f0e", lw=1.3, ms=5,
+         label=f"$w_{{\\rm audio}}$ (μ={mw['w_audio']:.2f})")
+ax2.plot(folds, w_url,   "^-", color="#2ca02c", lw=1.3, ms=5,
+         label=f"$w_{{\\rm url}}$  (μ={mw['w_url']:.2f})")
+ax2.plot(folds, w_meta,  "D-", color="#9467bd", lw=1.3, ms=5,
+         label=f"$w_{{\\rm meta}}$ (μ={mw['w_meta']:.2f})")
 
-# ── (b) 5-fold CV: weight stability ────────────
-ax = axes[1]
-folds = ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5']
-if exp6 and exp6.get("fold_weights") and len(exp6["fold_weights"]) >= 5:
-    folds_data = exp6["fold_weights"]
-    w_text  = [round(1/(1+np.exp(-fw[0]))*0.5, 2) for fw in folds_data]
-    w_audio = [round(1/(1+np.exp(-fw[1]))*0.35, 2) for fw in folds_data]
-    w_url   = [round(1/(1+np.exp(-fw[2]))*0.25, 2) for fw in folds_data]
-    w_meta  = [round(1/(1+np.exp(-fw[3]))*0.15, 2) for fw in folds_data]
-else:
-    w_text  = [0.41, 0.39, 0.40, 0.42, 0.38]
-    w_audio = [0.30, 0.31, 0.29, 0.30, 0.30]
-    w_url   = [0.19, 0.20, 0.21, 0.19, 0.21]
-    w_meta  = [0.10, 0.10, 0.10, 0.09, 0.11]
+for mu, c in [(mw["w_text"], "#1f77b4"), (mw["w_audio"], "#ff7f0e"),
+              (mw["w_url"], "#2ca02c"),  (mw["w_meta"], "#9467bd")]:
+    ax2.axhline(mu, color=c, lw=0.4, ls=":", alpha=0.5)
 
-x = np.arange(len(folds))
-width = 0.2
+ax2.set_xlabel("CV fold")
+ax2.set_ylabel("L-BFGS fusion weight")
+ax2.set_xticks(folds)
+ax2.set_ylim(0.05, 0.48)
+ax2.set_title("(b) 5-fold CV stability (Table X)",
+              weight="bold", fontsize=9)
+ax2.legend(loc="center right", fontsize=6.3, ncol=1)
 
-ax.bar(x - 1.5*width, w_text,  width, color=PALETTE['green'],
-       edgecolor='black', linewidth=0.8, label='$w_{text}$ (μ=0.40)')
-ax.bar(x - 0.5*width, w_audio, width, color=PALETTE['red'],
-       edgecolor='black', linewidth=0.8, label='$w_{audio}$ (μ=0.30)')
-ax.bar(x + 0.5*width, w_url,   width, color=PALETTE['orange'],
-       edgecolor='black', linewidth=0.8, label='$w_{url}$ (μ=0.20)')
-ax.bar(x + 1.5*width, w_meta,  width, color=PALETTE['purple'],
-       edgecolor='black', linewidth=0.8, label='$w_{meta}$ (μ=0.10)')
+# ---- (c) Architecture comparison ----
+for a in EXP06_ARCHITECTURE:
+    name   = a["arch"]
+    f1     = a["f1"]
+    lat    = a["latency_ms"]
+    params = a["params"]
+    is_ours = name.startswith("sigmoid")
+    color  = "#ff7f0e" if is_ours else (
+             "#7f7f7f" if "softmax" in name else
+             "#1f77b4" if "2L" in name else "#9467bd")
+    ms = np.log10(max(params, 5)) * 4 + 4
+    ax3.scatter([lat], [f1], s=ms * 15, color=color,
+                edgecolor="black", lw=0.6, alpha=0.85, zorder=3)
+    ax3.annotate(name, xy=(lat, f1), xytext=(lat, f1 + 0.003),
+                 ha="center", fontsize=6.5, weight="bold")
 
-# μ reference lines
-for mu, color in [(0.40, PALETTE['green']), (0.30, PALETTE['red']),
-                   (0.20, PALETTE['orange']), (0.10, PALETTE['purple'])]:
-    ax.axhline(y=mu, color=color, linestyle=':', linewidth=1.0, alpha=0.6)
+# Pareto front line
+xs = [a["latency_ms"] for a in EXP06_ARCHITECTURE if a["arch"] != "softmax"]
+ys = [a["f1"]         for a in EXP06_ARCHITECTURE if a["arch"] != "softmax"]
+ax3.plot(xs, ys, "--", color="#888", lw=0.6, alpha=0.7)
 
-ax.set_xticks(x)
-ax.set_xticklabels(folds, fontsize=10.5)
-ax.set_ylabel("Weight value", fontsize=11)
-ax.set_title("(b)  5-fold CV: weight stability", fontsize=12.5, fontweight='bold')
-ax.set_ylim(0, 0.50)
-ax.legend(fontsize=8.5, loc='upper center', ncol=4, framealpha=0.95,
-          bbox_to_anchor=(0.5, 0.98))
-ax.grid(True, axis='y', alpha=0.3)
-# Annotation as figure-level text under panel b
-ax.text(2, 0.45, "σ < 0.018 across all folds → high stability",
-        ha='center', fontsize=10, color=PALETTE['navy'], fontweight='bold',
-        bbox=dict(facecolor='white', edgecolor=PALETTE['navy'],
-                 boxstyle='round,pad=0.3'))
+ax3.set_xlabel("Inference latency (ms, log scale)")
+ax3.set_ylabel("F1 score")
+ax3.set_xscale("log")
+ax3.set_xlim(0.3, 30)
+ax3.set_ylim(0.905, 0.932)
+ax3.set_title("(c) Architecture trade-off (Table XII)",
+              weight="bold", fontsize=9)
+ax3.text(0.7, 0.908, "circle size ∝ log(#params)",
+         fontsize=6.3, color="#666", style="italic")
 
-# ── (c) Architecture comparison ────────────────
-ax = axes[2]
-if exp6 and exp6.get("architecture_comparison"):
-    archs = []
-    f1s = []
-    latencies_str = []
-    params_str = []
-    for r in exp6["architecture_comparison"]:
-        archs.append(r["arch"])
-        f1s.append(r["f1"])
-        latencies_str.append(r.get("latency_str", "<1 ms"))
-        params_str.append(r.get("params_str", "5"))
-    colors = [PALETTE['red'], PALETTE['green'], PALETTE['purple'], PALETTE['purple']]
-else:
-    archs = ['sigmoid\nlinear\n(ours)', 'softmax\nlinear', 'MM-Transformer\n(2 layers)', 'MM-Transformer\n(4 layers)']
-    f1s   = [0.923, 0.909, 0.926, 0.927]
-    # R4 fix: use "<1 ms" instead of "0.5 ms"
-    latencies_str = ['<1 ms', '<1 ms', '8.2 ms', '16.4 ms']
-    params_str    = ['5 params', '5 params', '1.2M params', '2.4M params']
-    colors        = [PALETTE['red'], PALETTE['green'], PALETTE['purple'], PALETTE['purple']]
-
-x = np.arange(len(archs))
-bars = ax.bar(x, f1s, color=colors, edgecolor='black', linewidth=1.0,
-              alpha=0.9, width=0.6)
-bars[0].set_edgecolor(PALETTE['red'])
-bars[0].set_linewidth(2.4)
-
-for i, v in enumerate(f1s):
-    weight = 'bold' if i == 0 else 'normal'
-    ax.text(i, v + 0.0015, f"{v:.3f}", ha='center', va='bottom',
-            fontsize=10.5, fontweight=weight, color=PALETTE['navy'])
-
-# Latency + params labels INSIDE bars (R4 fix)
-for i, (lat, par) in enumerate(zip(latencies_str, params_str)):
-    ax.text(i, 0.905, lat, ha='center', va='center', fontsize=9.5,
-            color='white', fontweight='bold')
-    ax.text(i, 0.902, par, ha='center', va='center', fontsize=8.5,
-            color='white')
-
-# Trade-off annotation
-ax.annotate("Trainable fusion gains\n+0.003-0.004 F1, but uses\n5-orders more params",
-            xy=(2.5, 0.926), xytext=(0.2, 0.940),
-            fontsize=9.5, color=PALETTE['purple'], fontweight='bold',
-            arrowprops=dict(arrowstyle='->', lw=1.2, color=PALETTE['purple']))
-
-ax.set_xticks(x)
-ax.set_xticklabels(archs, fontsize=10)
-ax.set_ylabel("F1 score", fontsize=11)
-ax.set_title("(c)  Architecture comparison", fontsize=12.5, fontweight='bold')
-ax.set_ylim(0.895, 0.945)
-ax.grid(True, axis='y', alpha=0.3)
-
-fig.text(0.5, 0.0,
-         "Fig. 6.  Multimodal fusion analysis. (a) Acoustic modality contributes the largest gain (+0.022 F1) due to prosodic cues. "
-         "(b) L-BFGS weights are stable across 5-fold CV (σ < 0.018). "
-         "(c) Linear fusion is preferable given on-device latency constraints (<1 ms vs 8-16 ms for transformers).",
-         ha='center', fontsize=9.5, style='italic')
-
-plt.tight_layout(rect=[0, 0.04, 1, 1])
-plt.savefig('./output/fig06_fusion_analysis.png',
-            dpi=150, bbox_inches='tight', facecolor='white')
-plt.close()
-print("✓ fig06 regenerated: cleaner labels, <1 ms")
+sci.save(fig, "fig06_fusion_analysis.png", w=7.16, h=2.7)
+print("Saved fig06_fusion_analysis.png")

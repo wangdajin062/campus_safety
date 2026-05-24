@@ -1,0 +1,11 @@
+numpy>=1.21
+scikit-learn>=1.0
+rouge-score>=0.1.2
+
+# Optional (full feature set):
+#   datasets>=2.14         # for HuggingFace TeleAntiFraud-28k
+#   librosa>=0.10          # for real MFCC features
+#   torch>=2.0             # for PyTorch models + Whisper
+#   transformers>=4.30     # for Whisper-tiny encoder
+#   bert-score>=0.3        # for BERTScore reasoning eval
+#   llama-cpp-python>=0.2  # for GGUF model inference

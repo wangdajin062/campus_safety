@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+
+# Environment
+.env
+.env.local
+*.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Data / Models
+data/
+*.gguf
+*.bin
+*.pkl
+*.parquet
+*.pt
+*.pth
+
+# Docker
+docker-data/
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Docs (not needed in runtime image)
+docs/
+figures_scripts/
+
+# Android (not needed in backend image)
+android/
+
+# Standalone library tests (not needed in backend image)
+qad_multiguard/tests/
+qad_multiguard/.pytest_cache/
+
+# Scripts (not needed in runtime image)
+scripts/verify_deployment.py
+scripts/cases_data.json
+
+# Temp
+tmp/
+temp/
+*.tmp
+*.log

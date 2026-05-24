@@ -1,12 +1,16 @@
 version: "3.9"
 
 # ═══════════════════════════════════════════════════════════
-# 校园安全 APP v3 — 软硬协同多模态推测解码部署配置
+# QAD-MultiGuard — Base Docker Compose
+#
+# Development:  docker compose up -d
+# Production:   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# With GPU:     docker compose --profile gpu -f docker-compose.yml -f docker-compose.prod.yml up -d
 # ═══════════════════════════════════════════════════════════
 
 services:
 
-  # ── FastAPI 主服务 ──────────────────────────────────────
+  # ── FastAPI Backend ────────────────────────────────────
   api:
     build:
       context: ./backend
@@ -25,32 +29,28 @@ services:
       SMS_SIGN_NAME:   ${SMS_SIGN_NAME}
       SMS_TEMPLATE_CODE: ${SMS_TEMPLATE_CODE}
       FCM_SERVER_KEY:  ${FCM_SERVER_KEY}
-      APP_ENV:         production
-      ALLOWED_ORIGINS: '["https://campus-safety.com"]'
-      # v3 推测解码配置
+      APP_ENV:         development
+      ALLOWED_ORIGINS: '["http://localhost:3000","http://localhost:8000"]'
       DRAFT_MODEL_PATH: /models/fraud_draft_q4km.gguf
       VERIFY_MODEL_URL: http://llm-server:8001
       GAMMA:           5
     volumes:
       - ./backend:/app
-      - model_cache:/models       # GGUF 模型持久化
-      - ml_feedback:/app/ml/models  # 反馈样本持久化
+      - model_cache:/models
+      - ml_feedback:/app/ml/models
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 4g
+      start_period: 10s
 
-  # ── PostgreSQL 数据库 ────────────────────────────────────
+  # ── PostgreSQL ─────────────────────────────────────────
   db:
     image: postgres:15-alpine
     container_name: campus_safety_db
@@ -67,12 +67,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 2g
 
-  # ── Redis 缓存 ───────────────────────────────────────────
+  # ── Redis ─────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: campus_safety_redis
@@ -86,7 +82,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── Nginx 反向代理 + HTTPS ──────────────────────────────
+  # ── Nginx Reverse Proxy ───────────────────────────────
   nginx:
     image: nginx:1.26-alpine
     container_name: campus_safety_nginx
@@ -103,9 +99,10 @@ services:
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
       interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # ── LLM 推理服务（主模型 + 推测解码）────────────────────
-  # 注：需要 GPU 节点，CPU 部署时注释掉此服务
+  # ── LLM Inference Server (GPU only) ───────────────────
   llm-server:
     image: vllm/vllm-openai:v0.5.3
     container_name: campus_safety_llm
@@ -125,6 +122,8 @@ services:
         --max-model-len 2048
         --gpu-memory-utilization 0.85
         --disable-log-requests
+    profiles:
+      - gpu
     deploy:
       resources:
         reservations:
@@ -132,14 +131,12 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-    profiles:
-      - gpu    # docker-compose --profile gpu up 启用 GPU 推理
 
 volumes:
   postgres_data:
   redis_data:
-  model_cache:     # 共享模型缓存（API + LLM server）
-  ml_feedback:     # ML 反馈样本持久化
+  model_cache:
+  ml_feedback:
   nginx_logs:
 
 networks:
