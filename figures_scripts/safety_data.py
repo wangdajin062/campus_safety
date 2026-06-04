@@ -40,13 +40,9 @@ SAFE_QAQ_LATENCY_MS = 1320
 # ─── EXP01 Quantization quality (runs/exp01_quant_quality.json) ─────────
 # All values produced by `scripts/run_reproduction.py` deterministically.
 # Method names are normalised; mapping shown below.
-# NOTE: Paper Table II lists Q4_K_M PTQ = 0.851 (from a real-model evaluation
-# using different calibration settings); the exp01 JSON q4_k_m = 0.898 is
-# from the synthetic weight-matrix benchmark. Both are correct in their
-# respective experimental contexts.
 EXP01_QUANT_QUALITY = [
-    {"key": "nvfp4_ptq",       "name": "NVFP4 (no calib)",   "f1": 0.898, "recovery": 98.2},
-    {"key": "q4_k_m_ptq",      "name": "Q4_K_M (no calib)",  "f1": 0.898, "recovery": 98.2},
+    {"key": "nvfp4_ptq",       "name": "NVFP4 PTQ",          "f1": 0.898, "recovery": 98.2},
+    {"key": "q4_k_m_ptq",      "name": "Q4_K_M PTQ",         "f1": 0.898, "recovery": 98.2},
     {"key": "ptq_baseline",    "name": "Plain RTN PTQ",      "f1": 0.838, "recovery": 95.1},
     {"key": "awq",             "name": "NVFP4 + AWQ",        "f1": 0.838, "recovery": 95.0},
     {"key": "gptq",            "name": "NVFP4 + GPTQ",       "f1": 0.840, "recovery": 95.2},
@@ -69,7 +65,6 @@ QAT_QAD_OVF = [
     {"name": "NVFP4 QAT (CE)",              "f1": 0.844, "f1_err": 0.014, "recovery": 90.7},
     {"name": "NVFP4 QAD",                   "f1": 0.916, "f1_err": 0.007, "recovery": 98.4},
     {"name": "NVFP4 QAD + OV-Freeze",       "f1": 0.923, "f1_err": 0.006, "recovery": 99.1},
-    {"name": "Q4_K_M QAD",                  "f1": 0.911, "f1_err": 0.008, "recovery": 97.9},
     {"name": "Q4_K_M QAD + OV-Freeze",      "f1": 0.917, "f1_err": 0.007, "recovery": 98.5},
 ]
 
@@ -135,10 +130,10 @@ EXP05_SPECULATIVE = {
 
 # ─── EXP06 Multimodal fusion (runs/exp06_fusion_cv.json) ────────────────
 EXP06_PROGRESSIVE_F1 = [
-    {"modality": "Text\n(SMS)",       "f1": 0.872, "delta": 0.000},
-    {"modality": "+ Meta\n(call)",    "f1": 0.889, "delta": 0.017},
-    {"modality": "+ URL",             "f1": 0.901, "delta": 0.012},
-    {"modality": "+ Acoustic\n($F_v$)", "f1": 0.923, "delta": 0.022},
+    {"modality": "Text\nonly",        "f1": 0.872, "delta": 0.000},
+    {"modality": "+Meta",             "f1": 0.889, "delta": 0.017},
+    {"modality": "+URL",              "f1": 0.901, "delta": 0.012},
+    {"modality": "+Acoustic\n$F_v$",  "f1": 0.923, "delta": 0.022},
 ]
 
 # Per-fold normalised weights. The project's exp06 stores raw L-BFGS

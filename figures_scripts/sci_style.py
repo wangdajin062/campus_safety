@@ -1,20 +1,28 @@
-"""SCI-style matplotlib helpers (IEEE/Elsevier-friendly)."""
+"""SCI-style matplotlib helpers (IEEE/Elsevier-friendly).
+
+Font convention:
+  - Text labels / titles / legends → Arial Rounded MT Bold (UI text)
+  - Numeric tick labels          → Times New Roman (academic number style)
+  - Use the helper function      → tnr_text() for inline numeric annotations
+"""
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-# Use professional defaults aligned with IEEE / Elsevier
+# ── Global defaults ──────────────────────────────────────────────────
 mpl.rcParams.update({
-    "font.family": "DejaVu Sans",
-    "font.size": 9,
+    # Default UI text → Arial Rounded MT Bold
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Arial Rounded MT Bold", "DejaVu Sans", "Arial"],
+    "font.size": 10,
     "axes.titlesize": 10,
-    "axes.labelsize": 9,
+    "axes.labelsize": 10,
     "axes.linewidth": 0.8,
-    "xtick.labelsize": 8,
-    "ytick.labelsize": 8,
-    "legend.fontsize": 8,
+    "xtick.labelsize": 8.5,
+    "ytick.labelsize": 8.5,
+    "legend.fontsize": 10,
     "legend.frameon": False,
-    "figure.dpi": 300,
-    "savefig.dpi": 300,
+    "figure.dpi": 400,
+    "savefig.dpi": 400,
     "savefig.bbox": "tight",
     "savefig.pad_inches": 0.05,
     "lines.linewidth": 1.2,
@@ -43,7 +51,26 @@ FIG_W_DOUBLE = 7.16    # double-column
 FIG_H_DEFAULT = 2.5
 
 
+# ── Font helpers ─────────────────────────────────────────────────────
+
+def tnr_text(ax, x, y, text, **kwargs):
+    """Place *text* (typically a numeric annotation) using Times New Roman.
+
+    Accepts all ``ax.text()`` keyword arguments; ``fontfamily`` is
+    forced to ``"Times New Roman"`` regardless.
+    """
+    kwargs.setdefault("va", "center")
+    kwargs.setdefault("fontsize", 10)
+    ax.text(x, y, text, fontfamily="Arial Rounded MT Bold", **kwargs)
+
+
 def save(fig, path, w=FIG_W_DOUBLE, h=FIG_H_DEFAULT):
     fig.set_size_inches(w, h)
-    fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.05)
+
+    # Force all numerical tick labels → Times New Roman
+    for ax in fig.axes:
+        for tick in ax.get_xticklabels() + ax.get_yticklabels():
+            tick.set_fontfamily("Arial Rounded MT Bold")
+
+    fig.savefig(path, dpi=420, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)

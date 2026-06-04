@@ -36,10 +36,10 @@ for m in QAT_QAD_OVF:
         tag = "ours"
     methods.append((name, m["f1"], m["recovery"], m["f1_err"], tag))
 
-methods.append(("SAFE-QAQ [27]", SAFE_QAQ_F1, None, SAFE_QAQ_F1_ERR, "domain"))
+methods.append(("SAFE-QAQ", SAFE_QAQ_F1, None, SAFE_QAQ_F1_ERR, "domain"))
 
 color_map = {
-    "ref":       "#7f7f7f",
+    "ref":       "#6D6D6D",
     "ptq":       "#a8c8e8",
     "kd":        "#9467bd",
     "qat":       "#d62728",
@@ -49,8 +49,8 @@ color_map = {
 }
 
 fig, (ax1, ax2) = plt.subplots(
-    1, 2, figsize=(7.16, 3.6),
-    gridspec_kw={"width_ratios": [1.5, 1.0], "wspace": 0.50},
+    1, 2, figsize=(7.6, 4.6),
+    gridspec_kw={"width_ratios": [1.7, 1.0], "wspace": 0.35},
 )
 
 # (a) F1 bar chart
@@ -67,19 +67,21 @@ for i, m in enumerate(methods):
         bars[i].set_linewidth(1.4)
 
 ax1.set_yticks(y)
-ax1.set_yticklabels([m[0] for m in methods], fontsize=7.5)
+ax1.set_yticklabels([m[0] for m in methods])
 ax1.set_xlim(0.78, 0.95)
-ax1.set_xlabel("F1 score on TAF-28k test")
-ax1.set_title(f"(a) F1 vs {len(methods)-1} baselines",
-              weight="bold", fontsize=9.5)
+ax1.set_xlabel("F1 score on TAF-28k test", labelpad=4,fontsize=9)
+ax1.set_title(f"a) F1 vs {len(methods)-1} baselines",
+              weight="bold", fontsize=11, pad=10, x=0.40)
 ax1.axvline(BF16_F1, color="#555", lw=0.6, ls="--", alpha=0.7)
 ax1.text(BF16_F1, len(methods) - 0.3, " BF16 ceiling",
-         fontsize=6.5, color="#555", va="bottom")
+         fontsize=8.5, color="#555", va="bottom")
+
 for i, m in enumerate(methods):
-    if m[4] == "ours_full":
-        ax1.text(m[1] - 0.003, y[i], f"{m[1]:.3f}",
-                 va="center", ha="right", fontsize=7,
-                 color="white", weight="bold")
+    # F1 value annotation — always to the right of the error bar
+    ax1.text(m[1] + m[3] + 0.004, y[i], f"{m[1]:.3f}",
+             va="center", ha="left", fontsize=8.5,
+             color="black",
+             fontfamily="Times New Roman")
 
 # (b) Recovery rate
 methods_b = [m for m in methods if m[2] is not None]
@@ -87,31 +89,34 @@ y2        = np.arange(len(methods_b))[::-1]
 recovery  = [m[2] for m in methods_b]
 colors2   = [color_map[m[4]] for m in methods_b]
 ax2.barh(y2, recovery, color=colors2, edgecolor="black", lw=0.5)
+# Use short labels for (b) since (a) already shows full names
+short_name_map = {
+    "BF16 (upper)":             "BF16",
+    "Plain RTN PTQ":            "RTN",
+    "NVFP4 + AWQ":              "AWQ",
+    "NVFP4 + GPTQ":             "GPTQ",
+    "NVFP4 + SpinQuant":        "SpinQ",
+    "NVFP4 + QuaRot":           "QuaRot",
+    "NVFP4 + BitDistill":       "BitDist",
+    "NVFP4 QAT (CE)":           "QAT",
+    "NVFP4 QAD":                "QAD",
+    "NVFP4 QAD + OV-Freeze":    "QAD+OVF",
+    "Q4_K_M QAD + OV-Freeze":   "Q4K+OVF",
+}
 ax2.set_yticks(y2)
-ax2.set_yticklabels([m[0] for m in methods_b], fontsize=7.5)
+ax2.set_yticklabels([short_name_map.get(m[0], m[0]) for m in methods_b])
 ax2.set_xlim(89, 101)
-ax2.set_xlabel("Recovery rate (%)  vs BF16")
-ax2.set_title("(b) Accuracy recovery", weight="bold", fontsize=9.5)
+ax2.set_xlabel("Recovery rate (%)  vs BF16", labelpad=4,fontsize=9)
+ax2.set_title("b) Accuracy recovery", weight="bold", fontsize=11, pad=10, x=0.40)
 ax2.axvline(99.0, color="#cc5500", lw=0.7, ls=":", alpha=0.8)
 ax2.text(99.0, len(methods_b) - 0.3, " 99% target",
-         fontsize=6.5, color="#cc5500", va="bottom")
+         fontsize=8.5, color="#cc5500", va="bottom")
 for i, m in enumerate(methods_b):
-    if m[4] == "ours_full":
-        ax2.text(m[2] - 0.4, y2[i], f"{m[2]:.1f}",
-                 va="center", ha="right", fontsize=7,
-                 color="white", weight="bold")
+    # Recovery annotation — always to the right of the bar
+    ax2.text(m[2] + 0.6, y2[i], f"{m[2]:.1f}",
+             va="center", ha="left", fontsize=8.5,
+             color="black",
+             fontfamily="Times New Roman")
 
-from matplotlib.patches import Patch
-legend_items = [
-    Patch(facecolor=color_map["ref"],       label="BF16 upper bound"),
-    Patch(facecolor=color_map["ptq"],       label="Advanced PTQ"),
-    Patch(facecolor=color_map["kd"],        label="Self-distillation"),
-    Patch(facecolor=color_map["qat"],       label="QAT (cross-entropy)"),
-    Patch(facecolor=color_map["ours_full"], edgecolor="#cc5500", lw=1.2, label="Ours"),
-    Patch(facecolor=color_map["domain"],    label="Domain baseline"),
-]
-fig.legend(handles=legend_items, loc="upper center", ncol=6,
-           bbox_to_anchor=(0.5, 1.02), fontsize=7.5, frameon=False)
-
-sci.save(fig, "fig02_main_results.png", w=7.16, h=3.6)
+sci.save(fig, "fig02_main_results.png", w=7.6, h=4.6)
 print("Saved fig02_main_results.png")
