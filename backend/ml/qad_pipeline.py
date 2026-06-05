@@ -1,9 +1,8 @@
 """
 ml/qad_pipeline.py — QAD-MultiGuard v5.0
 量化感知蒸馏 + OV-Freeze 策略
-论文公式 (1): L_QAD = α·L_task + β·L_KD(τ) + γ·L_quant
-α=0.4, β=0.5, γ=0.1, τ=3.0
-OV-Freeze: 最后 30% epoch 冻结输出方差，回收 1.0+ PPL
+论文公式 (1): L_QAD = D_KL(p_teacher(y|x) || p_student(y|x))  [纯 KL 散度]
+OV-Freeze: 最后 30% epoch 冻结输出方差，抑制量化敏感层漂移
 """
 from __future__ import annotations
 import json, logging, math, time
@@ -17,10 +16,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class QADConfig:
-    # 论文公式 (1) 参数
+    # 论文公式 (1): 纯 KL 散度损失（不再使用三项混合）
+    # α/β/γ 保留仅用于消融实验的 Three-Term 对照
     alpha:       float = 0.4
     beta:        float = 0.5
-    gamma_coeff: float = 0.1   # 注意：避免与推测解码 γ 混淆，命名为 gamma_coeff
+    gamma_coeff: float = 0.1
     temperature: float = 3.0   # KD 软标签温度 τ
     top_k:       int   = 50
 
@@ -37,14 +37,14 @@ class QADConfig:
     sensitive_layers: tuple = ("o_proj", "v_proj", "q_proj", "k_proj")
 
     # 训练设置
-    learning_rate: float = 5e-5
+    learning_rate: float = 1e-5   # 论文 §4.1.4
     batch_size:    int   = 8
     max_steps:     int   = 2000
     warmup_steps:  int   = 100
     min_samples:   int   = 50
 
     # 模型路径
-    teacher_model: str = "models/qwen2.5-7b-instruct"
+    teacher_model: str = "models/qwen2.5-0.5b-instruct"  # 同源教师（0.5B BF16，论文 §3.2.2）
     student_model: str = "models/fraud_draft_q4km.gguf"
     output_model:  str = "models/fraud_qad_int4.gguf"
 
@@ -185,9 +185,9 @@ class QADPipeline:
     """
     量化感知蒸馏主流水线
     ──────────────────────
-    L_QAD = α·L_task + β·L_KD(τ) + γ·L_quant
-    α=0.4, β=0.5, γ=0.1, τ=3.0
-    + OV-Freeze（最后 30% epoch）
+    L_QAD = D_KL(p_teacher(y|x) || p_student(y|x))  [论文公式 1: 纯 KL 散度]
+    OV-Freeze: 最后 30% 步激活，约束敏感层输出方差
+    Three-Term 损失 (α·L_task + β·L_KD + γ·L_quant) 保留用于消融对照
     """
     def __init__(self, config: Optional[QADConfig] = None):
         self.config = config or QADConfig()
@@ -213,14 +213,10 @@ class QADPipeline:
         w_sample = rng.normal(0, 0.02, (128, 64)).astype(np.float32)
         q_stats  = self.quant.quant_error(w_sample, "q_proj")
 
-        # 三项损失（论文公式 1）
-        def softmax(x):
-            e = np.exp(x - x.max()); return e/e.sum()
-        l_task  = float(-np.mean(np.log(softmax(s_logits)+1e-9)))
+        # 纯 KL 散度损失（论文公式 1: L_QAD = D_KL(p_teacher || p_student)）
         l_kd    = self.kd.compute(t_logits, s_logits)
-        l_quant = q_stats.error_rate
+        l_pure_kl = l_kd  # 纯 KL 蒸馏，无附加任务/量化项
         cfg     = self.config
-        total   = cfg.alpha*l_task + cfg.beta*l_kd + cfg.gamma_coeff*l_quant
 
         # OV-Freeze 激活检查
         ov_active = self.ov_freeze.should_activate(self._step, cfg.max_steps)
@@ -233,10 +229,8 @@ class QADPipeline:
         lr = self._get_lr()
         rec = {
             "step":        self._step,
-            "loss_total":  round(total, 4),
-            "loss_task":   round(l_task, 4),
-            "loss_kd":     round(l_kd, 4),
-            "loss_quant":  round(l_quant, 6),
+            "loss_total":  round(l_kd, 4),       # 纯 KL 散度
+            "loss_pure_kl":round(l_kd, 4),
             "quant_err":   round(q_stats.error_rate, 6),
             "ov_active":   ov_active,
             "ov_frozen":   self.ov_freeze.frozen_count,

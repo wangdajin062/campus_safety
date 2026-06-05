@@ -1,25 +1,41 @@
 {
-  "generated_at": "2026-06-04",
+  "generated_at": "2026-06-04 20:58:44",
   "datasets": {
     "TAF-28k": {
       "full_name": "TeleAntiFraud-28k",
       "description": "首个面向电信反诈的开源音频-文本双模态慢思考数据集",
       "samples": 28511,
       "audio_hours": 307,
-      "tasks": ["场景分类", "欺诈检测", "欺诈类型分类"],
+      "tasks": [
+        "场景分类",
+        "欺诈检测",
+        "欺诈类型分类"
+      ],
       "splits": "8:1:1 (train:val:test)",
       "sources": [
-        {"name": "HuggingFace", "url": "https://huggingface.co/datasets/JimmyMa99/TeleAntiFraud"},
-        {"name": "ModelScope", "url": "https://www.modelscope.cn/datasets/JimmyMa99/TeleAntiFraud"},
-        {"name": "hf-mirror (国内镜像)", "url": "https://hf-mirror.com/datasets/JimmyMa99/TeleAntiFraud"},
-        {"name": "GitHub", "url": "https://github.com/JimmyMa99/TeleAntiFraud"}
+        {
+          "name": "HuggingFace",
+          "url": "https://huggingface.co/datasets/JimmyMa99/TeleAntiFraud"
+        },
+        {
+          "name": "ModelScope",
+          "url": "https://www.modelscope.cn/datasets/JimmyMa99/TeleAntiFraud"
+        },
+        {
+          "name": "hf-mirror (国内镜像)",
+          "url": "https://hf-mirror.com/datasets/JimmyMa99/TeleAntiFraud"
+        },
+        {
+          "name": "GitHub",
+          "url": "https://github.com/JimmyMa99/TeleAntiFraud"
+        }
       ],
       "paper": "Ma et al., ACM MM 2025",
       "arxiv": "2503.24115",
       "bib_key": "1",
-      "hf_repo": "JimmyMa99/TeleAntiFraud",
-      "download_status": "network_unavailable",
-      "download_note": "HuggingFace 和 GitHub 在当前网络环境下不可达。请在有网络连接的环境中使用: huggingface-cli download JimmyMa99/TeleAntiFraud 或通过 ModelScope 镜像下载"
+      "download_status": "downloaded",
+      "local_path": "data/TAF28k/",
+      "local_samples": "4000 train + 400 test"
     },
     "ChiFraud": {
       "full_name": "ChiFraud (SmsSpam-CN)",
@@ -30,13 +46,25 @@
       "fraud_categories": 11,
       "collection_period": "2022-2023 (12 months)",
       "sources": [
-        {"name": "GitHub", "url": "https://github.com/xuemingxxx/ChiFraud"},
-        {"name": "ACL Anthology", "url": "https://aclanthology.org/2025.coling-main.398/"}
+        {
+          "name": "GitHub",
+          "url": "https://github.com/xuemingxxx/ChiFraud"
+        },
+        {
+          "name": "ACL Anthology",
+          "url": "https://aclanthology.org/2025.coling-main.398/"
+        }
       ],
       "paper": "Tang et al., COLING 2025",
       "bib_key": "chifraud",
-      "download_status": "partial",
-      "download_note": "git clone 因网络问题未完成。请手动执行: git clone https://github.com/xuemingxxx/ChiFraud.git database/ChiFraud"
+      "download_status": "downloaded",
+      "local_path": "database/ChiFraud/",
+      "local_size": "~96.8 MB",
+      "files": [
+        "dataset/ChiFraud_train.csv",
+        "dataset/ChiFraud_t2022.csv",
+        "dataset/ChiFraud_t2023.csv"
+      ]
     },
     "AdvFraud-3k": {
       "full_name": "AdvFraud-3k",
@@ -49,7 +77,7 @@
       "agreement": "Cohen's κ = 0.87",
       "availability": "NON-PUBLIC",
       "reason": "包含对抗攻击样本，由所在机构数据合规审查",
-      "construction_guide": "AdvFraud3k_construction_guide.json",
+      "note": "构建方法见 AdvFraud3k_construction_guide.json",
       "paper_section": "§4.1",
       "bib_key": "in-house"
     }
@@ -59,14 +87,5 @@
     "taf28k_python": "from datasets import load_dataset; ds = load_dataset('JimmyMa99/TeleAntiFraud')",
     "taf28k_modelscope": "from modelscope.msdatasets import MsDataset; ds = MsDataset.load('JimmyMa99/TeleAntiFraud')",
     "chifraud_git": "git clone https://github.com/xuemingxxx/ChiFraud.git database/ChiFraud"
-  },
-  "verification_results": {
-    "parameter_alignment": "35/35 (100%) MATCH",
-    "simulation_tests": "5/5 (100%) PASSED",
-    "qad_pipeline_ppl": "✅ fp16=8.43, int4_ptq=9.42, int4_qad=8.73, int4_ov=8.62",
-    "spec_decoding": "✅ α=0.86, γ=5, theoretical=4.25, H100=3.49, SD8G3=3.32",
-    "multimodal_fusion": "✅ w=[0.40,0.30,0.20,0.10], sum=1.0",
-    "acoustic_privacy": "✅ WER≈1.0 (≥0.95), compression=375×, DP available",
-    "f1_consistency": "✅ All 15 methods self-consistent (P×R→F1)"
   }
 }

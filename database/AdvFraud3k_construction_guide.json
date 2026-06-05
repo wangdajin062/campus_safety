@@ -1,98 +1,22 @@
 {
   "dataset": "AdvFraud-3k",
-  "version": "1.0",
   "availability": "非公开 (自建对抗数据集)",
   "paper_section": "§4.1 实验设置与数据基准",
-  "purpose": "评估模型在对抗攻击下的鲁棒性",
-  "paper_results": {
-    "bf16_f1": 0.882,
-    "nvfp4_qad_ovf_f1": 0.875,
-    "absolute_drop_vs_bf16": 0.007,
-    "relative_drop_vs_taf28k_bf16": 0.052,
-    "within_threat_model_c2": true
-  },
   "construction_method": {
-    "step1": {
-      "description": "从 TAF-28k 测试集随机抽取 1,000 条欺诈文本样本",
-      "source": "JimmyMa99/TeleAntiFraud (split=test, label=fraud)",
-      "sample_count": 1000
-    },
-    "step2": {
-      "description": "由 3 名独立标注员进行对抗式改写",
-      "annotators": 3,
-      "instructions": "对每条原始样本应用以下至少 2 种策略进行改写，确保改写后仍保持原欺诈意图"
-    },
-    "step3": {
-      "description": "第 4 名资深标注员进行质量复核",
-      "reviewers": 1,
-      "agreement_threshold": "Cohen's κ ≥ 0.80",
-      "observed_agreement": "Cohen's κ = 0.87"
-    },
-    "step4": {
-      "description": "领域专家撰写 2,000 条新型欺诈话术",
-      "experts": "2 名电信反诈领域专家",
-      "sample_count": 2000,
-      "categories": ["金融诈骗", "冒充公检法", "刷单兼职", "贷款诈骗", "情感诈骗", "钓鱼链接"]
-    }
+    "step1": "从 TAF-28k 测试集随机抽取 1,000 条欺诈样本",
+    "step2": "由 3 名独立标注员进行对抗式改写",
+    "step3": "第 4 名资深标注员复核 (Cohen's κ = 0.87)",
+    "step4": "领域专家撰写 2,000 条新型欺诈话术"
   },
   "adversarial_strategies": [
-    {
-      "id": "AS1",
-      "name": "同义词扰动 (Synonym Perturbation)",
-      "description": "将关键欺诈术语替换为语义相近但表面形式不同的表达",
-      "example": "转账汇款 → 打款资金划转; 公安局 → 公安部门/派出所"
-    },
-    {
-      "id": "AS2",
-      "name": "句式拓扑重排 (Syntactic Reordering)",
-      "description": "改变句子结构而不改变核心欺诈逻辑",
-      "example": "立即转账到安全账户 → 为了您的资金安全请尽快完成以下账户的转账操作"
-    },
-    {
-      "id": "AS3",
-      "name": "方言特征转换 (Dialect Feature Transformation)",
-      "description": "注入地域性方言词汇和表达习惯",
-      "example": "你涉嫌洗钱 → 侬个账户有洗钞票的嫌疑哦"
-    },
-    {
-      "id": "AS4",
-      "name": "隐喻表达 (Metaphorical Expression)",
-      "description": "使用间接、隐晦的表述替代直接的欺诈话术",
-      "example": "转账解冻 → 交点保证金就能把那个限制给解了"
-    },
-    {
-      "id": "AS5",
-      "name": "语气弱化 (Tone Attenuation)",
-      "description": "降低原话术的紧迫感和威胁性",
-      "example": "立即处理否则冻结 → 建议尽快核实一下，可能会影响正常使用"
-    },
-    {
-      "id": "AS6",
-      "name": "关键信息替换 (Key Info Substitution)",
-      "description": "替换电话号码、银行名称、金额等关键参数",
-      "example": "转账到 62284800 → 打入 6222021234567890"
-    },
-    {
-      "id": "AS7",
-      "name": "长句拆分 (Long Sentence Splitting)",
-      "description": "将复合欺诈语句拆分为多条短消息",
-      "example": "单条长消息 → 2-3 条连续短消息"
-    },
-    {
-      "id": "AS8",
-      "name": "跨领域话术注入 (Cross-domain Jargon Injection)",
-      "description": "混入看似专业的金融/法律术语以增加可信度",
-      "example": "注入'第三方资金托管'、'司法协助执行'等术语"
-    }
+    "同义词扰动 (Synonym Perturbation)",
+    "句式拓扑重排 (Syntactic Reordering)",
+    "方言特征转换 (Dialect Feature Transformation)",
+    "隐喻表达 (Metaphorical Expression)",
+    "语气弱化 (Tone Attenuation)",
+    "关键信息替换 (Key Info Substitution)",
+    "长句拆分 (Long Sentence Splitting)",
+    "跨领域话术注入 (Cross-domain Jargon Injection)"
   ],
-  "evaluation_protocol": {
-    "use_case": "仅用于测试评估（不参与训练）",
-    "train_test_leakage": "原 TAF-28k 测试集样本与其改写样本不会形成训练-测试泄漏",
-    "metrics": ["F1-score", "Precision", "Recall", "FPR"]
-  },
-  "compliance": {
-    "review_status": "经所在机构数据合规审查",
-    "approval_number": "将在论文录用时披露",
-    "data_privacy": "改写过程不涉及原始音频，仅处理已脱敏的文本"
-  }
+  "note": "该数据集仅用于测试评估，不参与训练。如需复现，请参照上述方法从 TAF-28k 构建。"
 }
