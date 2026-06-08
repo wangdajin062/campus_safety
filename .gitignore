@@ -81,3 +81,4 @@ qad_multiguard/
 scripts/SAFF-QAQ.py
 scripts/SafeData-QAQ.py
 scripts/cases_data.json
+*.pdf
