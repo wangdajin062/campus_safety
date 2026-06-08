@@ -82,3 +82,13 @@ scripts/SAFF-QAQ.py
 scripts/SafeData-QAQ.py
 scripts/cases_data.json
 *.pdf
+
+# LaTeX compilation artifacts
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.spl
+docs/*.out
+docs/*.toc
+docs/*.lot
+docs/*.lof
