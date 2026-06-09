@@ -77,6 +77,9 @@ docs/*.drawio
 docs/*.json
 qad_multiguard/
 
+# ── 本地 DOCX 文档（仅本地保留）──
+docs/*.docx
+
 # ── 研究脚本 (已移除) ────────────
 scripts/SAFF-QAQ.py
 scripts/SafeData-QAQ.py
